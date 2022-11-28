@@ -1,0 +1,133 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "Node",
+"class": "AbstractJumpController",
+"language": "GDScript",
+"path": "res://src/jumps/abstract_jump_controller.gd"
+}, {
+"base": "Node2D",
+"class": "AbstractJumpInput",
+"language": "GDScript",
+"path": "res://src/inputs/abstract_jump_input.gd"
+}, {
+"base": "Node",
+"class": "AbstractMapGenerator",
+"language": "GDScript",
+"path": "res://src/mapgen/abstract_map_generator.gd"
+}, {
+"base": "RigidBody2D",
+"class": "ActiveAgent",
+"language": "GDScript",
+"path": "res://scenes/agents/active_agent.gd"
+}, {
+"base": "AbstractJumpController",
+"class": "ClassicJumpController",
+"language": "GDScript",
+"path": "res://src/jumps/classic_jump_controller.gd"
+}, {
+"base": "AbstractMapGenerator",
+"class": "ClassicMapGenerator",
+"language": "GDScript",
+"path": "res://src/mapgen/classic_map_generator.gd"
+}, {
+"base": "Reference",
+"class": "GeneratedPlatform",
+"language": "GDScript",
+"path": "res://src/mapgen/generated_platform.gd"
+}, {
+"base": "AbstractJumpInput",
+"class": "JumpInput",
+"language": "GDScript",
+"path": "res://src/inputs/jump_input.gd"
+}, {
+"base": "Reference",
+"class": "MapGenTools",
+"language": "GDScript",
+"path": "res://src/mapgen/map_gen_tools.gd"
+}, {
+"base": "Reference",
+"class": "PlatformTools",
+"language": "GDScript",
+"path": "res://src/platforms/platform_tools.gd"
+}, {
+"base": "RigidBody2D",
+"class": "SiblingFragilePlatform",
+"language": "GDScript",
+"path": "res://scenes/platforms/sibling_fragile_platform.gd"
+}, {
+"base": "Node",
+"class": "VariableVolume",
+"language": "GDScript",
+"path": "res://sfx/variable_volume.gd"
+} ]
+_global_script_class_icons={
+"AbstractJumpController": "",
+"AbstractJumpInput": "",
+"AbstractMapGenerator": "",
+"ActiveAgent": "",
+"ClassicJumpController": "",
+"ClassicMapGenerator": "",
+"GeneratedPlatform": "",
+"JumpInput": "",
+"MapGenTools": "",
+"PlatformTools": "",
+"SiblingFragilePlatform": "",
+"VariableVolume": ""
+}
+
+[application]
+
+config/name="Bola 2"
+run/main_scene="res://scenes/ui/main_menu.tscn"
+config/icon="res://icon.png"
+
+[display]
+
+window/handheld/orientation="sensor"
+
+[gui]
+
+common/drop_mouse_on_gui_input_disabled=true
+
+[input]
+
+jump={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":32,"unicode":0,"echo":false,"script":null)
+, Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":1,"pressed":false,"doubleclick":false,"script":null)
+ ]
+}
+
+[input_devices]
+
+buffering/agile_event_flushing=true
+
+[layer_names]
+
+2d_physics/layer_1="Environment"
+2d_physics/layer_2="Balls"
+
+[physics]
+
+common/physics_fps=90
+common/enable_pause_aware_picking=true
+2d/default_gravity=980
+2d/default_linear_damp=0.2
+
+[rendering]
+
+quality/driver/driver_name="GLES2"
+vram_compression/import_etc=true
+vram_compression/import_etc2=false
+environment/default_clear_color=Color( 0.0509804, 0.0509804, 0.0509804, 1 )
+quality/filters/msaa=3
+environment/default_environment="res://default_env.tres"

@@ -1,0 +1,45 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://sfx/variable_volume.gd" type="Script" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends RigidBody2D
+
+
+const BOUNCE_MODIFIER := 2.0
+const SOUND := preload(\"res://sfx/209943__veiler__bass-16b.wav\")
+const RAND_PITCH_SCALE := 0.2
+
+onready var _variable_volume: VariableVolume = $VariableVolume
+
+
+func build(start_origin: Vector2, end_origin: Vector2, thickness: int):
+	PlatformTools.base_platformify(self, start_origin, end_origin, thickness)
+
+
+func _integrate_forces(state):
+	if state.get_contact_count() == 0:
+		return
+	
+	var agent: ActiveAgent = state.get_contact_collider_object(0)
+	var linear_velocity: Vector2 = agent.linear_velocity * BOUNCE_MODIFIER
+	agent.queue_velocity_addition(linear_velocity.limit_length(_variable_volume.max_stimuli_value) - agent.linear_velocity)
+	var stream := _variable_volume.produce_player(SOUND, linear_velocity.length())
+	
+	stream.pitch_scale += lerp(- RAND_PITCH_SCALE, RAND_PITCH_SCALE, randf())
+	
+	add_child(stream)
+"
+
+[node name="RigidBody2D" type="RigidBody2D"]
+modulate = Color( 0.2, 1, 0.2, 1 )
+collision_mask = 2
+mode = 3
+contacts_reported = 1
+contact_monitor = true
+script = SubResource( 1 )
+
+[node name="VariableVolume" type="Node" parent="."]
+script = ExtResource( 1 )
+max_stimuli_value = 1500.0
+max_volume_db = 7.0

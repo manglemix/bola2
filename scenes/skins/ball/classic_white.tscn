@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="SphereMesh" id=1]
+radius = 10.0
+height = 20.0
+radial_segments = 24
+rings = 12
+
+[node name="MeshInstance2D" type="MeshInstance2D"]
+mesh = SubResource( 1 )
