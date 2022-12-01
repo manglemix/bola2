@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends HSlider
+
+const MAX_VOLUME := 10.0
+const MIN_VOLUME := -10.0
+
+export var _bus := \"Master\"
+
+onready var _bus_idx := AudioServer.get_bus_index(_bus)
+
+
+func _ready():
+	value = inverse_lerp(MIN_VOLUME, MAX_VOLUME, AudioServer.get_bus_volume_db(_bus_idx))
+
+
+func _on_value_changed(value):
+	AudioServer.set_bus_mute(_bus_idx, value == 0)
+	AudioServer.set_bus_volume_db(_bus_idx, lerp(MIN_VOLUME, MAX_VOLUME, value))
+"
+
+[node name="VolumeSlider" type="HSlider"]
+margin_right = 16.0
+margin_bottom = 16.0
+max_value = 1.0
+step = 0.05
+value = 0.5
+script = SubResource( 1 )
+
+[connection signal="value_changed" from="." to="." method="_on_value_changed"]

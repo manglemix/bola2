@@ -1,0 +1,161 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://fonts/JetBrainsMono-ExtraBold.woff2" type="DynamicFontData" id=1]
+[ext_resource path="res://themes/menu_theme.tres" type="Theme" id=2]
+[ext_resource path="res://scenes/ui/jump_arrow.tscn" type="PackedScene" id=3]
+[ext_resource path="res://scenes/ui/jump_arrow.gdshader" type="Shader" id=4]
+
+[sub_resource type="GDScript" id=4]
+script/source = "extends Control
+
+
+const RIGHT_COLUMN_HIDDEN_X := 250
+const RIGHT_COLUMN_TRANSITION_DURATION :=  0.25
+
+signal exit_pressed
+signal columns_visibility_changed(visibility)
+
+var _columns_visible := false
+var _last_current_jumps: int
+
+onready var _right_column: Node2D = $RightAnchor/RightColumn
+onready var _right_column_tween: Tween = $RightAnchor/RightColumn/Tween
+onready var _first_jump: Node2D = $LeftAnchor/FirstJump
+onready var _second_jump: Node2D = $LeftAnchor/SecondJump
+onready var _first_tween: Tween = $LeftAnchor/FirstJumpTween
+onready var _second_tween: Tween = $LeftAnchor/SecondJumpTween
+
+
+func _ready():
+	_right_column.position.x = RIGHT_COLUMN_HIDDEN_X
+
+
+func toggle_columns() -> bool:
+	if _columns_visible:
+		hide_columns()
+	else:
+		show_columns()
+	
+	return _columns_visible
+
+
+func show_columns():
+	_columns_visible = true
+	emit_signal(\"columns_visibility_changed\", true)
+	# warning-ignore:return_value_discarded
+	_right_column_tween.remove_all()
+	# warning-ignore:return_value_discarded
+	_right_column_tween.interpolate_property(_right_column, \"position:x\", _right_column.position.x, 0, RIGHT_COLUMN_TRANSITION_DURATION, Tween.TRANS_QUAD, Tween.EASE_IN_OUT)
+	# warning-ignore:return_value_discarded
+	_right_column_tween.start()
+
+
+func hide_columns():
+	_columns_visible = false
+	emit_signal(\"columns_visibility_changed\", false)
+	# warning-ignore:return_value_discarded
+	_right_column_tween.remove_all()
+	# warning-ignore:return_value_discarded
+	_right_column_tween.interpolate_property(_right_column, \"position:x\", _right_column.position.x, RIGHT_COLUMN_HIDDEN_X, RIGHT_COLUMN_TRANSITION_DURATION, Tween.TRANS_QUAD, Tween.EASE_IN_OUT)
+	# warning-ignore:return_value_discarded
+	_right_column_tween.start()
+
+
+func on_exit_pressed():
+	emit_signal(\"exit_pressed\")
+
+
+func on_pause_pressed():
+	# warning-ignore:return_value_discarded
+	toggle_columns()
+
+
+func on_jump_reset():
+	_first_jump.material.set_shader_param(\"visible_frac\", 1.0)
+	_second_jump.material.set_shader_param(\"visible_frac\", 1.0)
+
+
+func on_jump_ended():
+	match _last_current_jumps:
+		1:
+			_first_jump.material.set_shader_param(\"visible_frac\", 0)
+		0:
+			_second_jump.material.set_shader_param(\"visible_frac\", 0)
+
+
+func on_jump_status_changed(current_jumps: int, usage_fraction: float):
+	_last_current_jumps = current_jumps
+	match current_jumps:
+		1:
+			_first_jump.material.set_shader_param(\"visible_frac\", usage_fraction)
+		0:
+			_first_jump.material.set_shader_param(\"visible_frac\", 0)
+			_second_jump.material.set_shader_param(\"visible_frac\", usage_fraction)
+"
+
+[sub_resource type="DynamicFont" id=2]
+size = 64
+font_data = ExtResource( 1 )
+
+[sub_resource type="ShaderMaterial" id=5]
+shader = ExtResource( 4 )
+shader_param/visible_frac = 1.0
+
+[node name="InGameMenu" type="Control"]
+anchor_right = 1.0
+script = SubResource( 4 )
+
+[node name="RightAnchor" type="Control" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+
+[node name="Button" type="Button" parent="RightAnchor"]
+margin_left = -131.0
+margin_top = 31.0
+margin_right = -31.0
+margin_bottom = 131.0
+rect_min_size = Vector2( 100, 100 )
+focus_mode = 0
+theme = ExtResource( 2 )
+custom_fonts/font = SubResource( 2 )
+shortcut_in_tooltip = false
+enabled_focus_mode = 0
+text = "||"
+
+[node name="RightColumn" type="Node2D" parent="RightAnchor"]
+position = Vector2( 0, 120 )
+
+[node name="Button" type="Button" parent="RightAnchor/RightColumn"]
+margin_left = -236.0
+margin_top = 30.0
+margin_right = -36.0
+margin_bottom = 130.0
+rect_min_size = Vector2( 200, 100 )
+focus_mode = 0
+theme = ExtResource( 2 )
+custom_fonts/font = SubResource( 2 )
+shortcut_in_tooltip = false
+enabled_focus_mode = 0
+text = "EXIT"
+
+[node name="Tween" type="Tween" parent="RightAnchor/RightColumn"]
+
+[node name="LeftAnchor" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="SecondJump" parent="LeftAnchor" instance=ExtResource( 3 )]
+position = Vector2( 55, 77 )
+scale = Vector2( 0.6, 0.6 )
+
+[node name="FirstJump" parent="LeftAnchor" instance=ExtResource( 3 )]
+material = SubResource( 5 )
+position = Vector2( 130, 77 )
+scale = Vector2( 0.6, 0.6 )
+
+[node name="FirstJumpTween" type="Tween" parent="LeftAnchor"]
+
+[node name="SecondJumpTween" type="Tween" parent="LeftAnchor"]
+
+[connection signal="pressed" from="RightAnchor/Button" to="." method="on_pause_pressed"]
+[connection signal="pressed" from="RightAnchor/RightColumn/Button" to="." method="on_exit_pressed"]

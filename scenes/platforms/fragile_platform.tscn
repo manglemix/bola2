@@ -58,6 +58,7 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 	timer.connect(\"timeout\", self, \"set_collision_layer\", [0])
 	add_child(timer)
 	var sibling: SiblingFragilePlatform = null
+	FrameBlocker.add_block()
 	
 	if abs(contact_point.x) < _width * (1 - SPLIT_PADDING_FRACTION) / 2:
 		var total_mass := mass
@@ -126,6 +127,7 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 		state.transform.origin -= offset
 		
 	yield(get_tree(), \"idle_frame\")
+	FrameBlocker.remove_block()
 	# warning-ignore:return_value_discarded
 	_tween.start()
 	timer.start()
@@ -185,3 +187,4 @@ max_volume_db = 12.0
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource( 2 )
 pitch_scale = 0.77
+bus = "SFX"

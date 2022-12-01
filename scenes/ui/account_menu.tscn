@@ -3,7 +3,7 @@
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=1]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=2]
 
-[node name="Leaderboards" type="VBoxContainer"]
+[node name="AccountMenu" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme = ExtResource( 1 )
@@ -15,8 +15,9 @@ margin_right = 360.0
 margin_bottom = 398.0
 text = "In progress..."
 align = 1
+autowrap = true
 
-[node name="Button" type="Button" parent="."]
+[node name="Button3" type="Button" parent="."]
 margin_left = 142.0
 margin_top = 402.0
 margin_right = 218.0

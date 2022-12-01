@@ -44,6 +44,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://src/mapgen/generated_platform.gd"
 }, {
+"base": "Button",
+"class": "GotoButton",
+"language": "GDScript",
+"path": "res://scenes/ui/goto_button.gd"
+}, {
 "base": "AbstractJumpInput",
 "class": "JumpInput",
 "language": "GDScript",
@@ -64,6 +69,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scenes/platforms/sibling_fragile_platform.gd"
 }, {
+"base": "Node2D",
+"class": "Trail",
+"language": "GDScript",
+"path": "res://scenes/skins/trails/trail.gd"
+}, {
 "base": "Node",
 "class": "VariableVolume",
 "language": "GDScript",
@@ -77,10 +87,12 @@ _global_script_class_icons={
 "ClassicJumpController": "",
 "ClassicMapGenerator": "",
 "GeneratedPlatform": "",
+"GotoButton": "",
 "JumpInput": "",
 "MapGenTools": "",
 "PlatformTools": "",
 "SiblingFragilePlatform": "",
+"Trail": "",
 "VariableVolume": ""
 }
 
@@ -90,9 +102,21 @@ config/name="Bola 2"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+FrameBlocker="*res://src/singletons/frame_blocker.gd"
+Initializer="*res://src/singletons/initializer.gd"
+
 [display]
 
+window/size/width=360
+window/size/height=800
+window/size/test_width=1200
+window/size/test_height=800
 window/handheld/orientation="sensor"
+window/stretch/mode="2d"
+window/stretch/aspect="keep_height"
+window/stretch/shrink=0.8
 
 [gui]
 
@@ -120,8 +144,10 @@ buffering/agile_event_flushing=true
 
 common/physics_fps=90
 common/enable_pause_aware_picking=true
+2d/thread_model=2
 2d/default_gravity=980
 2d/default_linear_damp=0.2
+2d/default_angular_damp=0.5
 
 [rendering]
 
@@ -129,5 +155,5 @@ quality/driver/driver_name="GLES2"
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
 environment/default_clear_color=Color( 0.0509804, 0.0509804, 0.0509804, 1 )
-quality/filters/msaa=3
+quality/filters/use_fxaa=true
 environment/default_environment="res://default_env.tres"

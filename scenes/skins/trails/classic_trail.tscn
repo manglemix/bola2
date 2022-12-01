@@ -1,0 +1,85 @@
+[gd_scene load_steps=3 format=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Trail
+
+
+const MAX_SPEED := 800.0
+const MAX_SCALE := 0.8
+
+onready var _points: Node2D = $Node/TrailPoints
+onready var _tween: Tween = $Tween
+
+
+func _ready():
+	_points.scale.x = 0
+
+
+func on_jump(direction: float) -> void:
+	_points.rotation = direction
+	_tween.remove_all()
+	_tween.interpolate_property(_points, \"scale:x\", _points.scale.x, 1.0, 0.1, Tween.TRANS_QUAD, Tween.EASE_OUT)
+	_tween.start()
+
+
+func on_end_jump() -> void:
+	_tween.remove_all()
+	_tween.interpolate_property(_points, \"scale:x\", _points.scale.x, 0.0, 0.4, Tween.TRANS_QUAD, Tween.EASE_IN)
+	_tween.start()
+"
+
+[sub_resource type="SphereMesh" id=2]
+radius = 10.0
+height = 20.0
+radial_segments = 24
+rings = 12
+
+[node name="ClassicTrail" type="Node2D"]
+script = SubResource( 1 )
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]
+remote_path = NodePath("../Node/TrailPoints")
+update_rotation = false
+update_scale = false
+
+[node name="Node" type="Node" parent="."]
+
+[node name="TrailPoints" type="Node2D" parent="Node"]
+
+[node name="P1" type="RemoteTransform2D" parent="Node/TrailPoints"]
+position = Vector2( -10, 0 )
+remote_path = NodePath("../../../MeshInstance2D")
+update_rotation = false
+update_scale = false
+
+[node name="P2" type="RemoteTransform2D" parent="Node/TrailPoints/P1"]
+position = Vector2( -10, 0 )
+remote_path = NodePath("../../../../MeshInstance2D2")
+update_rotation = false
+update_scale = false
+
+[node name="P3" type="RemoteTransform2D" parent="Node/TrailPoints/P1/P2"]
+position = Vector2( -10, 0 )
+remote_path = NodePath("../../../../../MeshInstance2D3")
+update_rotation = false
+update_scale = false
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="."]
+modulate = Color( 1, 1, 1, 0.462745 )
+position = Vector2( -10, 0 )
+scale = Vector2( 1.15, 1.15 )
+mesh = SubResource( 2 )
+
+[node name="MeshInstance2D2" type="MeshInstance2D" parent="."]
+modulate = Color( 1, 1, 1, 0.172549 )
+position = Vector2( -20, 0 )
+scale = Vector2( 1.3, 1.3 )
+mesh = SubResource( 2 )
+
+[node name="MeshInstance2D3" type="MeshInstance2D" parent="."]
+modulate = Color( 1, 1, 1, 0.0666667 )
+position = Vector2( -30, 0 )
+scale = Vector2( 1.5, 1.5 )
+mesh = SubResource( 2 )
+
+[node name="Tween" type="Tween" parent="."]

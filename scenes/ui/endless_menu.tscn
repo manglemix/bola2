@@ -1,36 +1,27 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://fonts/JetBrainsMono-Bold.woff2" type="DynamicFontData" id=1]
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=2]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=3]
 
-[sub_resource type="GDScript" id=4]
-script/source = "extends VBoxContainer
-
-
-func _ready():
-	randomize()
-"
-
 [sub_resource type="DynamicFont" id=3]
 size = 64
 font_data = ExtResource( 1 )
 
-[node name="MainMenu" type="VBoxContainer"]
+[node name="EndlessMenu" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme = ExtResource( 2 )
 alignment = 1
-script = SubResource( 4 )
 
 [node name="Label" type="Label" parent="."]
-margin_left = 104.0
+margin_left = 47.0
 margin_top = 248.0
-margin_right = 256.0
+margin_right = 313.0
 margin_bottom = 334.0
 size_flags_horizontal = 4
 custom_fonts/font = SubResource( 3 )
-text = "BOLA"
+text = "ENDLESS"
 align = 1
 
 [node name="Control" type="Control" parent="."]
@@ -45,36 +36,36 @@ margin_top = 367.0
 margin_right = 218.0
 margin_bottom = 410.0
 size_flags_horizontal = 4
-text = "PLAY"
+text = "EASY"
 script = ExtResource( 3 )
-path = "res://scenes/ui/play_menu.tscn"
+path = "res://scenes/maps/classic/classic_easy.tscn"
 
 [node name="Button2" type="Button" parent="."]
-margin_left = 75.0
+margin_left = 123.0
 margin_top = 414.0
-margin_right = 284.0
+margin_right = 237.0
 margin_bottom = 457.0
 size_flags_horizontal = 4
-text = "LEADERBOARD"
+text = "NORMAL"
 script = ExtResource( 3 )
-path = "res://scenes/ui/leaderboards.tscn"
+path = "res://scenes/maps/classic/classic_normal.tscn"
 
 [node name="Button3" type="Button" parent="."]
-margin_left = 113.0
+margin_left = 123.0
 margin_top = 461.0
-margin_right = 246.0
+margin_right = 237.0
 margin_bottom = 504.0
 size_flags_horizontal = 4
-text = "ACCOUNT"
+text = "EXPERT"
 script = ExtResource( 3 )
-path = "res://scenes/ui/account_menu.tscn"
+path = "res://scenes/maps/classic/classic_expert.tscn"
 
-[node name="Button4" type="Button" parent="."]
-margin_left = 113.0
+[node name="Back" type="Button" parent="."]
+margin_left = 142.0
 margin_top = 508.0
-margin_right = 246.0
+margin_right = 218.0
 margin_bottom = 551.0
 size_flags_horizontal = 4
-text = "OPTIONS"
+text = "BACK"
 script = ExtResource( 3 )
-path = "res://scenes/ui/options_menu.tscn"
+path = "res://scenes/ui/play_menu.tscn"

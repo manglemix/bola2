@@ -25,7 +25,6 @@ func _integrate_forces(state):
 	var linear_velocity: Vector2 = agent.linear_velocity * BOUNCE_MODIFIER
 	agent.queue_velocity_addition(linear_velocity.limit_length(_variable_volume.max_stimuli_value) - agent.linear_velocity)
 	var stream := _variable_volume.produce_player(SOUND, linear_velocity.length())
-	
 	stream.pitch_scale += lerp(- RAND_PITCH_SCALE, RAND_PITCH_SCALE, randf())
 	
 	add_child(stream)

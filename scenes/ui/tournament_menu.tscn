@@ -8,7 +8,7 @@
 size = 64
 font_data = ExtResource( 1 )
 
-[node name="MultiplayerMenu" type="VBoxContainer"]
+[node name="TournamentMenu" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme = ExtResource( 2 )
@@ -16,43 +16,45 @@ alignment = 1
 
 [node name="Label" type="Label" parent="."]
 margin_top = 272.0
-margin_right = 418.0
+margin_right = 380.0
 margin_bottom = 358.0
 size_flags_horizontal = 4
 custom_fonts/font = SubResource( 3 )
-text = "MULTIPLAYER"
+text = "TOURNAMENT"
 align = 1
 
 [node name="Control" type="Control" parent="."]
 margin_top = 362.0
-margin_right = 418.0
+margin_right = 380.0
 margin_bottom = 387.0
 rect_min_size = Vector2( 0, 25 )
 
-[node name="Button" type="Button" parent="."]
-margin_left = 171.0
+[node name="Button2" type="Button" parent="."]
+margin_left = 133.0
 margin_top = 391.0
 margin_right = 247.0
 margin_bottom = 434.0
 size_flags_horizontal = 4
 disabled = true
-text = "RACE"
+text = "NORMAL"
 script = ExtResource( 3 )
+path = "res://scenes/maps/classic/classic_normal.tscn"
 
-[node name="Button2" type="Button" parent="."]
-margin_left = 161.0
+[node name="Button3" type="Button" parent="."]
+margin_left = 133.0
 margin_top = 438.0
-margin_right = 256.0
+margin_right = 247.0
 margin_bottom = 481.0
 size_flags_horizontal = 4
 disabled = true
-text = "CO-OP"
+text = "EXPERT"
 script = ExtResource( 3 )
+path = "res://scenes/maps/classic/classic_expert.tscn"
 
-[node name="Button3" type="Button" parent="."]
-margin_left = 171.0
+[node name="Back" type="Button" parent="."]
+margin_left = 152.0
 margin_top = 485.0
-margin_right = 247.0
+margin_right = 228.0
 margin_bottom = 528.0
 size_flags_horizontal = 4
 text = "BACK"

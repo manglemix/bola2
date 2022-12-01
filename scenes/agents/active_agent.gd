@@ -7,6 +7,7 @@ const THUMP_SOUND := preload("res://sfx/536789__egomassive__thumps.wav")
 signal position_set
 
 export var default_jump_controller_path: NodePath
+export var trail_path: NodePath
 
 var _velocity_set_is_queued := false
 var _queued_velocity_set: Vector2
@@ -17,14 +18,7 @@ var _queued_position_set: Vector2
 onready var _variable_volume: VariableVolume = $VariableVolume
 onready var _default_jump_controller: ClassicJumpController = get_node(default_jump_controller_path)
 onready var _current_jump_controller: AbstractJumpController = _default_jump_controller
-
-
-func try_jump(direction: float):
-	_current_jump_controller.try_jump(direction, linear_velocity)
-
-
-func end_jump():
-	_current_jump_controller.end_jump()
+onready var _trail: Trail = null if trail_path.is_empty() else get_node(trail_path)
 
 
 func add_child(node: Node, legible_unique_name:=false):
@@ -32,6 +26,7 @@ func add_child(node: Node, legible_unique_name:=false):
 		_current_jump_controller.disconnect("add_velocity", self, "queue_velocity_addition")
 		_current_jump_controller.disconnect("set_velocity", self, "queue_velocity_set")
 		_current_jump_controller.disconnect("tree_exited", self, "_reset_jump_controller")
+		_default_jump_controller.disconnect("jump_ended", _trail, "on_end_jump")
 		_current_jump_controller.end_jump()
 		
 		_current_jump_controller = node
@@ -41,6 +36,9 @@ func add_child(node: Node, legible_unique_name:=false):
 		node.connect("add_velocity", self, "queue_velocity_addition")
 		# warning-ignore:return_value_discarded
 		node.connect("set_velocity", self, "queue_velocity_set")
+		if _trail != null:
+			# warning-ignore:return_value_discarded
+			node.connect("jump_ended", _trail, "on_end_jump")
 	
 	.add_child(node, legible_unique_name)
 
@@ -48,6 +46,8 @@ func add_child(node: Node, legible_unique_name:=false):
 func _reset_jump_controller():
 	_current_jump_controller.disconnect("add_velocity", self, "queue_velocity_addition")
 	_current_jump_controller.disconnect("set_velocity", self, "queue_velocity_set")
+	if _trail != null:
+		_current_jump_controller.disconnect("jump_ended", _trail, "on_end_jump")
 	_current_jump_controller = _default_jump_controller
 
 
@@ -70,6 +70,9 @@ func _ready():
 	_default_jump_controller.connect("add_velocity", self, "queue_velocity_addition")
 	# warning-ignore:return_value_discarded
 	_default_jump_controller.connect("set_velocity", self, "queue_velocity_set")
+	if _trail != null:
+		# warning-ignore:return_value_discarded
+		_default_jump_controller.connect("jump_ended", _trail, "on_end_jump")
 
 
 func _integrate_forces(state: Physics2DDirectBodyState):
@@ -84,6 +87,9 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 
 	state.linear_velocity += _queued_velocity_addition
 	_queued_velocity_addition = Vector2.ZERO
+	_current_jump_controller.set_current_velocity(state.linear_velocity)
+	if _trail != null:
+		_trail.set_velocity(state.linear_velocity)
 	
 	var normal_sum := Vector2.ZERO
 #	var velocity_sum := Vector2.ZERO
