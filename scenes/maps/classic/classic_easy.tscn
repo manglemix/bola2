@@ -22,8 +22,9 @@ const BOUNCY_PLATFORM_SCENE := preload(\"res://scenes/platforms/bouncy_platform.
 const FRAGILE_PLATFORM_SCENE := preload(\"res://scenes/platforms/fragile_platform.tscn\")
 const NORMAL_PLATFORM_SCENE := preload(\"res://scenes/platforms/normal_platform.tscn\")
 const ROTATABLE_PLATFORM_SCENE := preload(\"res://scenes/platforms/rotatable_platform.tscn\")
+const HEAD_CELL_COUNT := 10
 
-export var head_cell_count := 10
+export var difficulty := 1
 
 var old_platform_root: Node2D
 var platform_root: Node2D
@@ -35,7 +36,7 @@ onready var player: ActiveAgent = $Player
 onready var first_platform: Node2D = $FirstPlatform
 onready var next_platform: RigidBody2D = $NextPlatform
 onready var next_platform_alpha: float = next_platform.modulate.a
-onready var min_transition_height: float = (head_cell_count - generator.map_grid_height) * generator.grid_cell_size
+onready var min_transition_height: float = (HEAD_CELL_COUNT - generator.map_grid_height) * generator.grid_cell_size
 
 
 func _ready():
@@ -174,6 +175,8 @@ func on_next_platform_reached():
 		tween.start()
 	
 	platform_tweens.clear()
+	
+	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
 	
 	first_platform.increment_counter()
 	next_platform.increment_counter()

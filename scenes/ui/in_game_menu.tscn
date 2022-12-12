@@ -1,9 +1,9 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://fonts/JetBrainsMono-ExtraBold.woff2" type="DynamicFontData" id=1]
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=2]
-[ext_resource path="res://scenes/ui/jump_arrow.tscn" type="PackedScene" id=3]
 [ext_resource path="res://scenes/ui/jump_arrow.gdshader" type="Shader" id=4]
+[ext_resource path="res://scenes/ui/jump_icon.tscn" type="PackedScene" id=5]
 
 [sub_resource type="GDScript" id=4]
 script/source = "extends Control
@@ -101,6 +101,10 @@ font_data = ExtResource( 1 )
 shader = ExtResource( 4 )
 shader_param/visible_frac = 1.0
 
+[sub_resource type="ShaderMaterial" id=6]
+shader = ExtResource( 4 )
+shader_param/visible_frac = 1.0
+
 [node name="InGameMenu" type="Control"]
 anchor_right = 1.0
 script = SubResource( 4 )
@@ -144,14 +148,15 @@ text = "EXIT"
 margin_right = 40.0
 margin_bottom = 40.0
 
-[node name="SecondJump" parent="LeftAnchor" instance=ExtResource( 3 )]
-position = Vector2( 55, 77 )
-scale = Vector2( 0.6, 0.6 )
-
-[node name="FirstJump" parent="LeftAnchor" instance=ExtResource( 3 )]
+[node name="FirstJump" parent="LeftAnchor" instance=ExtResource( 5 )]
 material = SubResource( 5 )
 position = Vector2( 130, 77 )
-scale = Vector2( 0.6, 0.6 )
+scale = Vector2( 1.2, 1.2 )
+
+[node name="SecondJump" parent="LeftAnchor" instance=ExtResource( 5 )]
+material = SubResource( 6 )
+position = Vector2( 55, 77 )
+scale = Vector2( 1.2, 1.2 )
 
 [node name="FirstJumpTween" type="Tween" parent="LeftAnchor"]
 

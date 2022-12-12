@@ -13,6 +13,7 @@ max_value = 90.0
 _data = [ Vector2( 0, -90 ), 0.0, 180.0, 0, 1, Vector2( 1, 90 ), 180.0, 0.0, 1, 0 ]
 
 [node name="Classic" instance=ExtResource( 1 )]
+difficulty = 2
 
 [node name="ClassicMapGenerator" parent="." index="0"]
 map_grid_height = 40

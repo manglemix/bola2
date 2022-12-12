@@ -1,28 +1,167 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=1]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends VBoxContainer
+
+
+onready var username: LineEdit = $Login/Username
+onready var password: LineEdit = $Login/Password
+
+
+func _ready():
+	if MangleApi.is_logged_in():
+		_on_logged_in()
+		if MangleApi.account_data != null:
+			_on_account_retrieved()
+		return
+	
+	$Account.hide()
+	# warning-ignore-all:return_value_discarded
+	MangleApi.connect(\"login_succeeded\", self, \"_on_logged_in\")
+	MangleApi.connect(\"login_bad_credentials\", self, \"_on_login_failed\")
+	MangleApi.connect(\"account_retrieved\", self, \"_on_account_retrieved\")
+
+
+func _on_text_entered(_new_text=null):
+	if username.text.empty() or password.text.empty():
+		return
+	
+	MangleApi.username = username.text
+	MangleApi.login(password.text)
+	username.editable = false
+	password.editable = false
+	$Login/Button.disabled = true
+	$Login/Label.text = \"\"
+
+
+func _on_logged_in():
+	$Login.hide()
+	$Label.hide()
+	$Account.visible = true
+	$Account/Username.text = MangleApi.username
+
+
+func _on_account_retrieved():
+	$Account/Easy.text += str(MangleApi.account_data.easy_highscore)
+	$Account/Normal.text += str(MangleApi.account_data.normal_highscore)
+	$Account/Expert.text += str(MangleApi.account_data.expert_highscore)
+	$Account/Tournament.text += str(MangleApi.account_data.tournament_wins)
+
+
+func _on_login_failed():
+	username.editable = true
+	password.editable = true
+	$Login/Button.disabled = false
+	$Login/Label.text = \"Login Failed\"
+"
 
 [node name="AccountMenu" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme = ExtResource( 1 )
 alignment = 1
+script = SubResource( 1 )
 
 [node name="Label" type="Label" parent="."]
-margin_top = 355.0
+margin_top = 110.0
 margin_right = 360.0
-margin_bottom = 398.0
-text = "In progress..."
+margin_bottom = 153.0
+text = "ACCOUNT"
 align = 1
-autowrap = true
+
+[node name="Login" type="VBoxContainer" parent="."]
+margin_top = 157.0
+margin_right = 360.0
+margin_bottom = 361.0
+
+[node name="Username" type="LineEdit" parent="Login"]
+margin_left = 61.0
+margin_right = 299.0
+margin_bottom = 53.0
+size_flags_horizontal = 4
+max_length = 16
+expand_to_text_length = true
+placeholder_text = "Username"
+
+[node name="Password" type="LineEdit" parent="Login"]
+margin_left = 61.0
+margin_top = 57.0
+margin_right = 299.0
+margin_bottom = 110.0
+size_flags_horizontal = 4
+secret = true
+expand_to_text_length = true
+placeholder_text = "Password"
+
+[node name="Button" type="Button" parent="Login"]
+margin_top = 114.0
+margin_right = 360.0
+margin_bottom = 157.0
+text = "LOGIN"
+
+[node name="Label" type="Label" parent="Login"]
+margin_top = 161.0
+margin_right = 360.0
+margin_bottom = 204.0
+align = 1
+
+[node name="Account" type="VBoxContainer" parent="."]
+margin_top = 365.0
+margin_right = 360.0
+margin_bottom = 643.0
+
+[node name="Username" type="Label" parent="Account"]
+margin_right = 360.0
+margin_bottom = 43.0
+align = 1
+
+[node name="Easy" type="Label" parent="Account"]
+margin_top = 47.0
+margin_right = 360.0
+margin_bottom = 90.0
+text = "Easy Highscore: "
+align = 1
+
+[node name="Normal" type="Label" parent="Account"]
+margin_top = 94.0
+margin_right = 360.0
+margin_bottom = 137.0
+text = "Normal Highscore: "
+align = 1
+
+[node name="Expert" type="Label" parent="Account"]
+margin_top = 141.0
+margin_right = 360.0
+margin_bottom = 184.0
+text = "Expert Highscore: "
+align = 1
+
+[node name="Tournament" type="Label" parent="Account"]
+margin_top = 188.0
+margin_right = 360.0
+margin_bottom = 231.0
+text = "Tournament Wins: "
+align = 1
+
+[node name="Control" type="Control" parent="Account"]
+margin_top = 235.0
+margin_right = 360.0
+margin_bottom = 278.0
+rect_min_size = Vector2( 0, 43 )
 
 [node name="Button3" type="Button" parent="."]
 margin_left = 142.0
-margin_top = 402.0
+margin_top = 647.0
 margin_right = 218.0
-margin_bottom = 445.0
+margin_bottom = 690.0
 size_flags_horizontal = 4
 text = "BACK"
 script = ExtResource( 2 )
 path = "res://scenes/ui/main_menu.tscn"
+
+[connection signal="text_entered" from="Login/Username" to="." method="_on_text_entered"]
+[connection signal="text_entered" from="Login/Password" to="." method="_on_text_entered"]
+[connection signal="pressed" from="Login/Button" to="." method="_on_text_entered"]
