@@ -53,7 +53,7 @@ func _end_jump():
 
 
 func _on_collision(floor_angle: float):
-	if floor_angle <= deg2rad(max_floor_angle_degrees):
+	if floor_angle <= deg2rad(max_floor_angle_degrees) and _current_jumps != max_jumps:
 		emit_signal("reset")
 		_current_jumps = max_jumps
 

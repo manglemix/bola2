@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://themes/menu_theme.tres" type="Theme" id=1]
+
+[node name="TournamentWin" type="Label"]
+margin_left = -492.0
+margin_top = -57.0
+margin_right = 2.0
+margin_bottom = -14.0
+theme = ExtResource( 1 )
+text = "You win! You can now exit"

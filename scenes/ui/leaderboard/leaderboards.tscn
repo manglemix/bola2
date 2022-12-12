@@ -16,9 +16,12 @@ var leaderboard_entries := [{}, {}, {}]
 onready var easy: Control = $MaxSize/TabContainer/Easy
 onready var normal: Control = $MaxSize/TabContainer/Normal
 onready var expert: Control = $MaxSize/TabContainer/Expert
+onready var loading: Control = $Loading
+onready var leaderboards: Control = $MaxSize
 
 
-func _enter_tree():
+func _ready():
+	leaderboards.hide()
 	MangleApi.sync_leaderboard = true
 	# warning-ignore:return_value_discarded
 	MangleApi.connect(\"new_leaderboard_entry\", self, \"_on_new_entry\")
@@ -34,6 +37,8 @@ class Entry extends Reference:
 
 
 func _on_new_entry(entry: MangleApi.LeaderboardEntryData):
+	loading.hide()
+	leaderboards.show()
 	var scene := ENTRY_SCENE.instance()
 	scene.initialize(entry.username, entry.levels)
 	
@@ -75,13 +80,14 @@ alignment = 1
 script = SubResource( 1 )
 
 [node name="Label" type="Label" parent="."]
-margin_top = 273.0
+margin_top = 308.0
 margin_right = 360.0
-margin_bottom = 316.0
+margin_bottom = 351.0
 text = "ENDLESS"
 align = 1
 
 [node name="MaxSize" type="MarginContainer" parent="."]
+visible = false
 margin_top = 320.0
 margin_right = 360.0
 margin_bottom = 432.0
@@ -144,17 +150,24 @@ margin_top = 47.0
 margin_right = 352.0
 margin_bottom = 47.0
 
-[node name="Control" type="Control" parent="."]
-margin_top = 436.0
+[node name="Loading" type="Label" parent="."]
+margin_top = 355.0
 margin_right = 360.0
-margin_bottom = 479.0
+margin_bottom = 398.0
+text = "Loading..."
+align = 1
+
+[node name="Control" type="Control" parent="."]
+margin_top = 402.0
+margin_right = 360.0
+margin_bottom = 445.0
 rect_min_size = Vector2( 0, 43 )
 
 [node name="Button" type="Button" parent="."]
 margin_left = 142.0
-margin_top = 483.0
+margin_top = 449.0
 margin_right = 218.0
-margin_bottom = 526.0
+margin_bottom = 492.0
 size_flags_horizontal = 4
 text = "BACK"
 script = ExtResource( 4 )

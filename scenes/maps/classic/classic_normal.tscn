@@ -1,6 +1,8 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=8 format=2]
 
-[ext_resource path="res://scenes/maps/classic/classic_easy.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/maps/classic/classic_base.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/skins/ball/stranger_normal.tscn" type="PackedScene" id=2]
+[ext_resource path="res://themes/menu_theme.tres" type="Theme" id=3]
 
 [sub_resource type="Curve" id=1]
 min_value = 1.0
@@ -11,6 +13,62 @@ _data = [ Vector2( 0, 1 ), 0.0, 0.0, 0, 0, Vector2( 1, 4 ), 7.17576, 0.0, 0, 0 ]
 min_value = -90.0
 max_value = 90.0
 _data = [ Vector2( 0, -90 ), 0.0, 180.0, 0, 1, Vector2( 1, 90 ), 180.0, 0.0, 1, 0 ]
+
+[sub_resource type="Animation" id=3]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:rotation_degrees")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ -10.9072 ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( -245, -25 ) ]
+}
+
+[sub_resource type="Animation" id=4]
+resource_name = "default"
+length = 4.0
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:rotation_degrees")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 2, 4 ),
+"transitions": PoolRealArray( 1.41421, 1, 0.784584 ),
+"update": 0,
+"values": [ -10.9072, 5.8, -10.9072 ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:position")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 2, 4 ),
+"transitions": PoolRealArray( 1.46409, 1, 0.784584 ),
+"update": 0,
+"values": [ Vector2( -256, -25 ), Vector2( -250, -25 ), Vector2( -256, -25 ) ]
+}
 
 [node name="Classic" instance=ExtResource( 1 )]
 difficulty = 2
@@ -23,9 +81,43 @@ normal_platform_probability = 0.4
 fragile_platform_probability = 0.35
 rotatable_platform_probability = 0.17
 
+[node name="Stranger" parent="FirstPlatform" index="4" instance=ExtResource( 2 )]
+modulate = Color( 0.560784, 0.560784, 0.560784, 1 )
+position = Vector2( -245, -25 )
+rotation = -0.190367
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="FirstPlatform/Stranger" index="3"]
+autoplay = "default"
+anims/RESET = SubResource( 3 )
+anims/default = SubResource( 4 )
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="FirstPlatform/Stranger" index="4"]
+rotation = -0.190367
+remote_path = NodePath("../../Node2D")
+update_rotation = false
+update_scale = false
+
+[node name="Node2D" type="Node2D" parent="FirstPlatform" index="5"]
+position = Vector2( -256, -25 )
+scale = Vector2( 0.4, 0.4 )
+
+[node name="Label" type="Label" parent="FirstPlatform/Node2D" index="0"]
+margin_left = 40.0
+margin_top = -85.0
+margin_right = 287.0
+margin_bottom = -38.0
+theme = ExtResource( 3 )
+text = "Don't give up"
+align = 1
+
 [node name="NextPlatform" parent="." index="4"]
 position = Vector2( 0, -2266 )
 
 [node name="VisibilityNotifier2D" parent="." index="5"]
 position = Vector2( 0, 143 )
 rect = Rect2( -500, 0, 1000, -2600 )
+
+[connection signal="progressed" from="FirstPlatform" to="FirstPlatform/Stranger" method="hide"]
+[connection signal="progressed" from="FirstPlatform" to="FirstPlatform/Stranger/RemoteTransform2D" method="queue_free"]
+[connection signal="progressed" from="FirstPlatform" to="FirstPlatform/Node2D" method="queue_free"]
+[connection signal="reset" from="FirstPlatform" to="FirstPlatform/Stranger" method="show"]

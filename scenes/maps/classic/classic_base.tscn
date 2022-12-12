@@ -1,0 +1,450 @@
+[gd_scene load_steps=19 format=2]
+
+[ext_resource path="res://scenes/skins/ball/classic_white.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/ui/in_game/in_game_menu.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/agents/active_agent.tscn" type="PackedScene" id=3]
+[ext_resource path="res://src/jumps/classic_jump_controller.gd" type="Script" id=4]
+[ext_resource path="res://fonts/JetBrainsMono-ExtraBold.woff2" type="DynamicFontData" id=5]
+[ext_resource path="res://src/mapgen/classic_map_generator.gd" type="Script" id=6]
+[ext_resource path="res://src/inputs/jump_input.gd" type="Script" id=7]
+[ext_resource path="res://sfx/624386__gmortizwavs__key-fx-2886-07.wav" type="AudioStream" id=8]
+[ext_resource path="res://scenes/maps/classic/tournament_win.tscn" type="PackedScene" id=9]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+
+const FADE_IN_DELAY_MODIFIER := 0.0015
+const MAX_SPAWN_SPEED := 1000.0
+const MIN_SPAWN_ANGLE_DEGREES := 135.0
+const MAX_RESPAWN_Y_SPEED := 450.0
+const PLATFORM_BUILD_SOUND := preload(\"res://sfx/platform_build.tscn\")
+const BOUNCY_PLATFORM_SCENE := preload(\"res://scenes/platforms/bouncy_platform.tscn\")
+const FRAGILE_PLATFORM_SCENE := preload(\"res://scenes/platforms/fragile_platform.tscn\")
+const NORMAL_PLATFORM_SCENE := preload(\"res://scenes/platforms/normal_platform.tscn\")
+const ROTATABLE_PLATFORM_SCENE := preload(\"res://scenes/platforms/rotatable_platform.tscn\")
+const HEAD_CELL_COUNT := 10
+
+export var difficulty := 1
+
+var old_platform_root: Node2D
+var platform_root: Node2D
+var platform_tweens := []
+var dying := false
+
+onready var generator: ClassicMapGenerator = $ClassicMapGenerator
+onready var player: ActiveAgent = $Player
+onready var first_platform: Node2D = $FirstPlatform
+onready var next_platform: RigidBody2D = $NextPlatform
+onready var next_platform_alpha: float = next_platform.modulate.a
+onready var min_transition_height: float = (HEAD_CELL_COUNT - generator.map_grid_height) * generator.grid_cell_size
+
+
+func _ready():
+	platform_root = Node2D.new()
+	platform_root.name = \"PlatformRoot\"
+	add_child(platform_root)
+	Tournament.seed_rng()
+	generator.generate()
+
+
+func add_platform(platform_data: GeneratedPlatform):
+	var platform: Node2D
+	match platform_data.platform_type:
+		GeneratedPlatform.PlatformType.FRAGILE:
+			platform = FRAGILE_PLATFORM_SCENE.instance()
+		
+		GeneratedPlatform.PlatformType.ROTATABLE:
+			platform = ROTATABLE_PLATFORM_SCENE.instance()
+		
+		GeneratedPlatform.PlatformType.BOUNCY:
+			platform = BOUNCY_PLATFORM_SCENE.instance()
+		
+		_:
+			platform = NORMAL_PLATFORM_SCENE.instance()
+	
+	platform.build(platform_data.start_origin, platform_data.end_origin, platform_data.thickness)
+	platform.modulate.a = 0
+	
+	var tween := Tween.new()
+	var delay := clamp(- platform.position.y * FADE_IN_DELAY_MODIFIER, 0.1, INF)
+	# warning-ignore:return_value_discarded
+	tween.interpolate_property(platform, \"modulate:a\", 0, 1.0, 0.5, Tween.TRANS_QUAD, Tween.EASE_OUT, delay)
+	platform.add_child(tween)
+	var audio_player := PLATFORM_BUILD_SOUND.instance()
+	var audio_timer := Timer.new()
+	audio_timer.wait_time = delay
+	audio_timer.one_shot = true
+	# warning-ignore:return_value_discarded
+	audio_timer.connect(\"timeout\", audio_player, \"play\")
+	# warning-ignore:return_value_discarded
+	audio_player.connect(\"finished\", audio_player, \"queue_free\")
+	audio_player.add_child(audio_timer)
+	platform.add_child(audio_player)
+	
+	platform_tweens.append([tween, platform, audio_timer])
+	
+	platform_root.call_deferred(\"add_child\", platform)
+
+
+func finish_generation():
+	for data in platform_tweens:
+		if !data[0].is_inside_tree():
+			yield(data[0], \"tree_entered\")
+		data[0].start()
+		if !data[2].is_inside_tree():
+			yield(data[2], \"tree_entered\")
+		data[2].start()
+
+
+func on_player_died():
+	Tournament.reset()
+	var clamped := player.linear_velocity.limit_length(MAX_SPAWN_SPEED)
+	var clamped_angle := clamped.angle_to(Vector2.UP)
+	
+	if clamped_angle > 0:
+		if clamped_angle < deg2rad(MIN_SPAWN_ANGLE_DEGREES):
+			clamped = Vector2.UP.rotated(- deg2rad(MIN_SPAWN_ANGLE_DEGREES)) * clamped.length()
+	elif clamped_angle > - deg2rad(MIN_SPAWN_ANGLE_DEGREES):
+		clamped = Vector2.UP.rotated(deg2rad(MIN_SPAWN_ANGLE_DEGREES)) * clamped.length()
+	
+	var offset := -clamped - player.position
+	player.queue_velocity_set(clamped)
+	player.queue_position_set(- clamped)
+	
+	if dying:
+		return
+	dying = true
+	
+	first_platform.reset_counter()
+	next_platform.reset_counter()
+	if old_platform_root != null:
+		old_platform_root.queue_free()
+		old_platform_root = null
+	
+	for child in platform_root.get_children():
+		if child.has_method(\"prepare_for_death\"):
+			child.prepare_for_death(offset)
+	
+	platform_root.queue_free()
+	platform_root = Node2D.new()
+	call_deferred(\"add_child\", platform_root)
+	platform_tweens.clear()
+	first_platform.modulate.a = next_platform_alpha
+	yield(first_platform, \"touched\")
+	first_platform.play_sound()
+	dying = false
+	var player_velocity := player.linear_velocity
+	player_velocity.y = clamp(player_velocity.y, - MAX_RESPAWN_Y_SPEED, 0)
+	player.queue_velocity_set(player_velocity)
+	fade_in_first_platform()
+	Tournament.seed_rng()
+	generator.generate()
+
+
+const RESET_PADDING := 0
+
+
+func on_next_platform_reached():
+	Tournament.win_level()
+	var new_player_position := Vector2(player.position.x, first_platform.position.y + (player.position.y - next_platform.position.y - RESET_PADDING))
+	var player_velocity := player.linear_velocity
+	var offset := new_player_position - player.position
+	
+	for child in platform_root.get_children():
+		if child.position.y > min_transition_height:
+			child.queue_free()
+		elif child.has_method(\"prepare_for_advancement\"):
+			child.prepare_for_advancement(offset)
+	
+	yield(get_tree(), \"idle_frame\")
+	
+	FrameBlocker.add_block()
+	
+	var height := generator.grid_cell_size * generator.map_grid_height
+	
+	for data in platform_tweens:
+		var tween: Tween = data[0]
+		var platform: Node2D = data[1]
+		
+		if !is_instance_valid(platform):
+			continue
+		
+		# warning-ignore:return_value_discarded
+		tween.remove_all()
+		# warning-ignore:return_value_discarded
+		tween.interpolate_property(platform, \"modulate:a\", 1.0, 0, 0.5, Tween.TRANS_QUAD, Tween.EASE_OUT, (height + platform.position.y) * FADE_IN_DELAY_MODIFIER)
+		# warning-ignore:return_value_discarded
+		tween.connect(\"tween_all_completed\", platform, \"queue_free\")
+		# warning-ignore:return_value_discarded
+		tween.start()
+	
+	platform_tweens.clear()
+	
+	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
+	
+	# the order of increments must be preserved
+	# as it is relied on
+	first_platform.increment_counter()
+	next_platform.increment_counter()
+	
+	first_platform.modulate.a = next_platform_alpha
+	
+	player.queue_velocity_set(player_velocity)
+	player.queue_position_set(new_player_position)
+	platform_root.position.y -= next_platform.position.y - first_platform.position.y
+	yield(player, \"position_set\")
+	yield(get_tree(), \"physics_frame\")
+	yield(get_tree(), \"physics_frame\")
+	
+	first_platform.play_sound()
+	fade_in_first_platform()
+	
+	FrameBlocker.remove_block()
+	
+	if old_platform_root != null:
+		old_platform_root.queue_free()
+		old_platform_root = null
+	
+	old_platform_root = platform_root
+	old_platform_root.name = \"OldPlatformRoot\"
+	platform_root = Node2D.new()
+	platform_root.name = \"PlatformRoot\"
+	add_child(platform_root)
+	
+	generator.generate()
+
+
+func fade_in_first_platform():
+	var tween := Tween.new()
+	# warning-ignore:return_value_discarded
+	tween.interpolate_property(first_platform, \"modulate:a\", next_platform_alpha, 1.0, 0.3, Tween.TRANS_QUAD, Tween.EASE_OUT)
+	first_platform.add_child(tween)
+	# warning-ignore:return_value_discarded
+	tween.connect(\"tween_all_completed\", tween, \"queue_free\")
+	# warning-ignore:return_value_discarded
+	tween.start()
+"
+
+[sub_resource type="Curve" id=2]
+min_value = 1.0
+max_value = 5.0
+_data = [ Vector2( 0, 1 ), 0.0, 0.0, 0, 0, Vector2( 1, 5 ), 7.17576, 0.0, 0, 0 ]
+
+[sub_resource type="Curve" id=3]
+min_value = -90.0
+max_value = 90.0
+_data = [ Vector2( 0, -90 ), 0.0, 298.582, 0, 0, Vector2( 0.503836, -1.63636 ), 109.237, 109.237, 0, 0, Vector2( 1, 90 ), 516.776, 0.0, 0, 0 ]
+
+[sub_resource type="GDScript" id=9]
+script/source = "extends CanvasLayer
+
+
+func _ready():
+	# warning-ignore:return_value_discarded
+	$InGameMenu.connect(\"columns_visibility_changed\", get_tree(), \"set_pause\")
+
+
+func _input(event):
+	if event.is_action_pressed(\"ui_cancel\"):
+		$InGameMenu.toggle_columns()
+
+
+func on_exit_pressed():
+	get_tree().paused = false
+	# warning-ignore:return_value_discarded
+	get_tree().change_scene(\"res://scenes/ui/play/play_menu.tscn\")
+"
+
+[sub_resource type="GDScript" id=7]
+script/source = "extends RigidBody2D
+
+
+signal touched
+signal progressed
+signal reset
+
+var counter := 1
+
+
+func _ready():
+	$TournamentWin.hide()
+
+
+func _on_body_entered(_body):
+	emit_signal(\"touched\")
+
+
+func increment_counter():
+	counter += 1
+	$Label.text = str(counter)
+	emit_signal(\"progressed\")
+	$TournamentWin.visible = $\"../NextPlatform/TournamentWin\".visible
+
+
+func reset_counter():
+	counter = 1
+	$Label.text = \"1\"
+	emit_signal(\"reset\")
+	$TournamentWin.hide()
+
+
+func play_sound():
+	$AudioStreamPlayer2D.call_deferred(\"play\", 0.35)
+"
+
+[sub_resource type="RectangleShape2D" id=4]
+extents = Vector2( 500, 10 )
+
+[sub_resource type="QuadMesh" id=5]
+size = Vector2( 1000, 20 )
+
+[sub_resource type="DynamicFont" id=8]
+size = 128
+font_data = ExtResource( 5 )
+
+[sub_resource type="GDScript" id=6]
+script/source = "extends RigidBody2D
+
+
+signal reached
+
+var counter := 2
+
+func _ready():
+	$TournamentWin.hide()
+	set_process_input(OS.is_debug_build())
+
+
+func _on_body_entered(_body):
+	emit_signal(\"reached\")
+
+
+func increment_counter():
+	counter += 1
+	$Label.text = str(counter)
+	$TournamentWin.visible = Tournament.enabled and !Tournament.won_tournament and counter == Tournament.WINS_NEEDED + 1
+
+
+func reset_counter():
+	counter = 2
+	$Label.text = \"2\"
+	$TournamentWin.hide()
+
+
+func _input(event):
+	if event.is_action_pressed(\"ui_accept\"):
+		print_debug(\"Cheat win!\")
+		var player: ActiveAgent = $\"../Player\"
+		player.queue_position_set(position + Vector2(0, -30))
+		player.queue_velocity_set(Vector2.ZERO)
+"
+
+[node name="Classic" type="Node2D"]
+script = SubResource( 1 )
+
+[node name="ClassicMapGenerator" type="Node" parent="."]
+script = ExtResource( 6 )
+platform_length_distribution = SubResource( 2 )
+platform_angle_distribution = SubResource( 3 )
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+pause_mode = 2
+script = SubResource( 9 )
+
+[node name="InGameMenu" parent="CanvasLayer" instance=ExtResource( 2 )]
+
+[node name="Player" parent="." instance=ExtResource( 3 )]
+position = Vector2( 0, 76 )
+z_index = 10
+default_jump_controller_path = NodePath("ClassicJumpController")
+
+[node name="ClassicSkin" parent="Player" instance=ExtResource( 1 )]
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+current = true
+
+[node name="JumpInput" type="Node2D" parent="Player"]
+script = ExtResource( 7 )
+
+[node name="ClassicJumpController" type="Node" parent="Player"]
+script = ExtResource( 4 )
+
+[node name="FirstPlatform" type="RigidBody2D" parent="."]
+position = Vector2( 0, 130 )
+z_index = 5
+collision_layer = 0
+collision_mask = 2
+mode = 3
+contacts_reported = 1
+contact_monitor = true
+script = SubResource( 7 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FirstPlatform"]
+shape = SubResource( 4 )
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="FirstPlatform"]
+mesh = SubResource( 5 )
+
+[node name="Label" type="Label" parent="FirstPlatform"]
+margin_left = 423.0
+margin_top = -156.0
+margin_right = 500.0
+margin_bottom = 14.0
+grow_horizontal = 0
+custom_fonts/font = SubResource( 8 )
+text = "1"
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="FirstPlatform"]
+stream = ExtResource( 8 )
+pitch_scale = 0.3
+autoplay = true
+bus = "SFX"
+
+[node name="TournamentWin" parent="FirstPlatform" instance=ExtResource( 9 )]
+
+[node name="NextPlatform" type="RigidBody2D" parent="."]
+modulate = Color( 1, 1, 1, 0.407843 )
+position = Vector2( 0, -1739 )
+collision_layer = 0
+collision_mask = 2
+mode = 3
+contacts_reported = 1
+contact_monitor = true
+script = SubResource( 6 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NextPlatform"]
+shape = SubResource( 4 )
+one_way_collision = true
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="NextPlatform"]
+mesh = SubResource( 5 )
+
+[node name="Label" type="Label" parent="NextPlatform"]
+margin_left = 423.0
+margin_top = -156.0
+margin_right = 500.0
+margin_bottom = 14.0
+grow_horizontal = 0
+custom_fonts/font = SubResource( 8 )
+text = "2"
+
+[node name="TournamentWin" parent="NextPlatform" instance=ExtResource( 9 )]
+
+[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="."]
+position = Vector2( 0, 139 )
+rect = Rect2( -500, 0, 1000, -2200 )
+
+[connection signal="finished" from="ClassicMapGenerator" to="." method="finish_generation"]
+[connection signal="platform_generated" from="ClassicMapGenerator" to="." method="add_platform"]
+[connection signal="exit_pressed" from="CanvasLayer/InGameMenu" to="CanvasLayer" method="on_exit_pressed"]
+[connection signal="direction_changed" from="Player/JumpInput" to="Player/ClassicJumpController" method="set_direction"]
+[connection signal="jump_ended" from="Player/JumpInput" to="Player/ClassicJumpController" method="set_trying_to_jump" binds= [ false ]]
+[connection signal="jump_started" from="Player/JumpInput" to="Player/ClassicJumpController" method="set_trying_to_jump" binds= [ true ]]
+[connection signal="jump_ended" from="Player/ClassicJumpController" to="CanvasLayer/InGameMenu" method="on_jump_ended"]
+[connection signal="jump_status_changed" from="Player/ClassicJumpController" to="CanvasLayer/InGameMenu" method="on_jump_status_changed"]
+[connection signal="reset" from="Player/ClassicJumpController" to="CanvasLayer/InGameMenu" method="on_jump_reset"]
+[connection signal="body_entered" from="FirstPlatform" to="FirstPlatform" method="_on_body_entered"]
+[connection signal="body_entered" from="NextPlatform" to="NextPlatform" method="_on_body_entered"]
+[connection signal="reached" from="NextPlatform" to="." method="on_next_platform_reached"]
+[connection signal="screen_exited" from="VisibilityNotifier2D" to="." method="on_player_died"]

@@ -1,9 +1,9 @@
 [gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://fonts/JetBrainsMono-ExtraBold.woff2" type="DynamicFontData" id=1]
-[ext_resource path="res://themes/menu_theme.tres" type="Theme" id=2]
-[ext_resource path="res://scenes/ui/jump_arrow.gdshader" type="Shader" id=4]
-[ext_resource path="res://scenes/ui/jump_icon.tscn" type="PackedScene" id=5]
+[ext_resource path="res://scenes/ui/in_game/jump_arrow.gdshader" type="Shader" id=2]
+[ext_resource path="res://scenes/ui/in_game/jump_icon.tscn" type="PackedScene" id=3]
+[ext_resource path="res://themes/menu_theme.tres" type="Theme" id=4]
 
 [sub_resource type="GDScript" id=4]
 script/source = "extends Control
@@ -98,11 +98,11 @@ size = 64
 font_data = ExtResource( 1 )
 
 [sub_resource type="ShaderMaterial" id=5]
-shader = ExtResource( 4 )
+shader = ExtResource( 2 )
 shader_param/visible_frac = 1.0
 
 [sub_resource type="ShaderMaterial" id=6]
-shader = ExtResource( 4 )
+shader = ExtResource( 2 )
 shader_param/visible_frac = 1.0
 
 [node name="InGameMenu" type="Control"]
@@ -120,7 +120,7 @@ margin_right = -31.0
 margin_bottom = 131.0
 rect_min_size = Vector2( 100, 100 )
 focus_mode = 0
-theme = ExtResource( 2 )
+theme = ExtResource( 4 )
 custom_fonts/font = SubResource( 2 )
 shortcut_in_tooltip = false
 enabled_focus_mode = 0
@@ -130,13 +130,12 @@ text = "||"
 position = Vector2( 0, 120 )
 
 [node name="Button" type="Button" parent="RightAnchor/RightColumn"]
-margin_left = -236.0
+margin_left = -224.0
 margin_top = 30.0
-margin_right = -36.0
+margin_right = -25.769
 margin_bottom = 130.0
-rect_min_size = Vector2( 200, 100 )
 focus_mode = 0
-theme = ExtResource( 2 )
+theme = ExtResource( 4 )
 custom_fonts/font = SubResource( 2 )
 shortcut_in_tooltip = false
 enabled_focus_mode = 0
@@ -148,12 +147,12 @@ text = "EXIT"
 margin_right = 40.0
 margin_bottom = 40.0
 
-[node name="FirstJump" parent="LeftAnchor" instance=ExtResource( 5 )]
+[node name="FirstJump" parent="LeftAnchor" instance=ExtResource( 3 )]
 material = SubResource( 5 )
 position = Vector2( 130, 77 )
 scale = Vector2( 1.2, 1.2 )
 
-[node name="SecondJump" parent="LeftAnchor" instance=ExtResource( 5 )]
+[node name="SecondJump" parent="LeftAnchor" instance=ExtResource( 3 )]
 material = SubResource( 6 )
 position = Vector2( 55, 77 )
 scale = Vector2( 1.2, 1.2 )

@@ -38,7 +38,7 @@ margin_bottom = 410.0
 size_flags_horizontal = 4
 text = "PLAY"
 script = ExtResource( 3 )
-path = "res://scenes/ui/play_menu.tscn"
+path = "res://scenes/ui/play/play_menu.tscn"
 
 [node name="Button2" type="Button" parent="."]
 margin_left = 75.0
@@ -58,7 +58,7 @@ margin_bottom = 504.0
 size_flags_horizontal = 4
 text = "ACCOUNT"
 script = ExtResource( 3 )
-path = "res://scenes/ui/account_menu.tscn"
+path = "res://scenes/ui/account/account_menu.tscn"
 
 [node name="Button4" type="Button" parent="."]
 margin_left = 113.0
@@ -68,4 +68,4 @@ margin_bottom = 551.0
 size_flags_horizontal = 4
 text = "OPTIONS"
 script = ExtResource( 3 )
-path = "res://scenes/ui/options_menu.tscn"
+path = "res://scenes/ui/options/options_menu.tscn"

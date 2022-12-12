@@ -9,7 +9,7 @@ rings = 12
 [sub_resource type="PrismMesh" id=2]
 size = Vector3( 7, 6, 0 )
 
-[node name="MeshInstance2D" type="MeshInstance2D"]
+[node name="ClassicSkin" type="MeshInstance2D"]
 mesh = SubResource( 1 )
 
 [node name="MeshInstance2D" type="MeshInstance2D" parent="."]

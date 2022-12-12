@@ -48,6 +48,7 @@ func set_sync_leaderboard(value: bool):
 
 func is_logged_in() -> bool:
 	return !session_key.empty()
+	
 
 
 func login(password: String):
@@ -110,10 +111,24 @@ func _on_get_account(result: int, response_code: int, _headers: PoolStringArray,
 		account_data.normal_highscore = raw_data["normal_max_level"]
 		account_data.expert_highscore = raw_data["hard_max_level"]
 		account_data.tournament_wins = raw_data["tournament_wins"]
+		Tournament.won_tournament = raw_data["won_tournament"]
 		emit_signal("account_retrieved")
 	
 	else:
 		print_debug("Unexpected response_code: ", response_code)
+
+
+func win_tournament(current_week: int):
+	# warning-ignore:return_value_discarded
+	print_debug("Tournament win sent")
+	_make_api_req(
+		"/api/bola/tournament",
+		"",
+		HTTPClient.METHOD_POST,
+		"week=" + str(current_week),
+		[FORM_TYPE],
+		true
+	)
 
 
 func add_leaderboard_entry(difficulty: int, levels: int):
@@ -140,7 +155,7 @@ func add_leaderboard_entry(difficulty: int, levels: int):
 	# warning-ignore:return_value_discarded
 	_make_api_req(
 		"/api/bola/leaderboard/endless",
-		"_on_leaderboard_entry",
+		"",
 		HTTPClient.METHOD_POST,
 		"difficulty=" + str(difficulty) + "&levels=" + str(levels),
 		[FORM_TYPE],
@@ -148,7 +163,7 @@ func add_leaderboard_entry(difficulty: int, levels: int):
 	)
 
 
-func _on_leaderboard_entry(result: int, response_code: int, _headers: PoolStringArray, body: PoolByteArray):
+func _on_response_debug(result: int, response_code: int, _headers: PoolStringArray, body: PoolByteArray):
 	if result != OK:
 		return
 	
@@ -166,6 +181,28 @@ func _ready():
 	_renewal_timer.wait_time = RENEWAL_INTERVAL
 	_renewal_timer.one_shot = true
 	add_child(_renewal_timer)
+	
+	# warning-ignore:return_value_discarded
+	_make_api_req(
+		"/api/bola/tournament",
+		"_on_tournament_received",
+		HTTPClient.METHOD_GET,
+		"",
+		[],
+		false
+	)
+
+
+func _on_tournament_received(result: int, response_code: int, _headers: PoolStringArray, body: PoolByteArray):
+	if result != OK:
+		return
+	
+	if response_code != HTTPClient.RESPONSE_OK:
+		print_debug("Unexpected error code: " + str(response_code) + " while getting tournament")
+		return
+	
+	var data: Dictionary = parse_json(body.get_string_from_utf8())
+	Tournament.initialize(data["week"], data["seed"], data["since"], data["until"])
 
 
 func _renew_session():
@@ -235,9 +272,10 @@ func _make_api_req(path: String, callback: String, method: int, body: String, he
 		headers.append("Session-Key: " + session_key)
 	
 	var request := _make_http_node()
-	if !callback.empty():
-		# warning-ignore:return_value_discarded
-		request.connect("request_completed", self, callback)
+	if callback.empty():
+		callback = "_on_response_debug"
+	# warning-ignore:return_value_discarded
+	request.connect("request_completed", self, callback)
 	
 	var err := request.request(
 		"https://manglemix.com" + path,

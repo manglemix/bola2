@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://scenes/maps/classic/classic_easy.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/maps/classic/classic_base.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/skins/ball/stranger_expert.tscn" type="PackedScene" id=2]
 
 [sub_resource type="Curve" id=1]
 min_value = 1.0
@@ -24,9 +25,16 @@ fragile_platform_probability = 0.35
 rotatable_platform_probability = 0.21
 bouncy_platform_probability = 0.14
 
+[node name="Stranger" parent="FirstPlatform" index="4" instance=ExtResource( 2 )]
+position = Vector2( -245, -25 )
+rotation = -1.54113
+
 [node name="NextPlatform" parent="." index="4"]
 position = Vector2( 0, -2955 )
 
 [node name="VisibilityNotifier2D" parent="." index="5"]
 position = Vector2( 0, 150 )
 rect = Rect2( -500, 0, 1000, -3400 )
+
+[connection signal="progressed" from="FirstPlatform" to="FirstPlatform/Stranger" method="hide"]
+[connection signal="reset" from="FirstPlatform" to="FirstPlatform/Stranger" method="show"]

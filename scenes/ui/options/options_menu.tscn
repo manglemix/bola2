@@ -2,7 +2,7 @@
 
 [ext_resource path="res://fonts/JetBrainsMono-Bold.woff2" type="DynamicFontData" id=1]
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=2]
-[ext_resource path="res://scenes/ui/volume_slider.tscn" type="PackedScene" id=3]
+[ext_resource path="res://scenes/ui/options/volume_slider.tscn" type="PackedScene" id=3]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=4]
 
 [sub_resource type="DynamicFont" id=3]

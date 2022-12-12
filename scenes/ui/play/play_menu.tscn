@@ -38,7 +38,7 @@ margin_bottom = 387.0
 size_flags_horizontal = 4
 text = "ENDLESS"
 script = ExtResource( 3 )
-path = "res://scenes/ui/endless_menu.tscn"
+path = "res://scenes/ui/play/endless_menu.tscn"
 
 [node name="Button2" type="Button" parent="."]
 margin_left = 75.0
@@ -48,7 +48,7 @@ margin_bottom = 434.0
 size_flags_horizontal = 4
 text = "MULTIPLAYER"
 script = ExtResource( 3 )
-path = "res://scenes/ui/multiplayer_menu.tscn"
+path = "res://scenes/ui/play/multiplayer_menu.tscn"
 
 [node name="Button3" type="Button" parent="."]
 margin_left = 85.0
@@ -58,7 +58,7 @@ margin_bottom = 481.0
 size_flags_horizontal = 4
 text = "TOURNAMENT"
 script = ExtResource( 3 )
-path = "res://scenes/ui/tournament_menu.tscn"
+path = "res://scenes/ui/play/tournament_menu.tscn"
 
 [node name="Button4" type="Button" parent="."]
 margin_left = 94.0
@@ -68,7 +68,7 @@ margin_bottom = 528.0
 size_flags_horizontal = 4
 text = "CHALLENGE"
 script = ExtResource( 3 )
-path = "res://scenes/ui/challenge_menu.tscn"
+path = "res://scenes/ui/play/challenge_menu.tscn"
 
 [node name="Back" type="Button" parent="."]
 margin_left = 142.0
