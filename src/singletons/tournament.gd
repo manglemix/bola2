@@ -3,14 +3,11 @@ extends Node
 
 const WINS_NEEDED := 10
 
-signal tournament_won
-
 var initialized := false
 var week_number: int
 var tournament_seed: int
 var since: int
 var until: int
-var time_since: int
 var time_until: int
 
 var enabled := false
@@ -25,15 +22,16 @@ func initialize(week_number: int, tournament_seed: int, since: int, until: int):
 	self.tournament_seed = tournament_seed
 	self.since = since
 	self.until = until
-	var time := OS.get_system_time_secs()
-	time_since = time - since
-	time_until = until - time
 	initialized = true
+
+
+func get_time_until() -> int:
+	return until - OS.get_system_time_secs()
 
 
 func seed_rng():
 	if enabled:
-		seed(tournament_seed)
+		seed(tournament_seed + _win_count)
 	else:
 		randomize()
 

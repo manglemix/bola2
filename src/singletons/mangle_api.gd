@@ -9,6 +9,8 @@ signal account_retrieved
 signal login_succeeded
 signal login_connection_failed
 signal login_bad_credentials
+signal nonexistent_user
+signal signup_failed(msg)
 # warning-ignore:unused_signal
 signal login_required
 
@@ -48,7 +50,6 @@ func set_sync_leaderboard(value: bool):
 
 func is_logged_in() -> bool:
 	return !session_key.empty()
-	
 
 
 func login(password: String):
@@ -63,7 +64,23 @@ func login(password: String):
 		emit_signal("login_connection_failed")
 
 
-func _on_login_completed(result: int, response_code: int, _headers: PoolStringArray, body: PoolByteArray):
+func signup(password: String):
+	if _make_api_req(
+		"/api/sign_up",
+		"_on_signup_completed",
+		HTTPClient.METHOD_POST,
+		"username=" + username + "&password=" + password,
+		[FORM_TYPE],
+		false
+	) != OK:
+		emit_signal("login_connection_failed")
+
+
+func _on_signup_completed(result: int, response_code: int, headers: PoolStringArray, body: PoolByteArray):
+	_on_login_completed(result, response_code, headers, body, true)
+
+
+func _on_login_completed(result: int, response_code: int, _headers: PoolStringArray, body: PoolByteArray, signup:=false):
 	if result != OK:
 		emit_signal("login_connection_failed")
 		return
@@ -73,7 +90,7 @@ func _on_login_completed(result: int, response_code: int, _headers: PoolStringAr
 		session_key = body.get_string_from_utf8()
 		_renewal_timer.start()
 		
-	# warning-ignore:return_value_discarded
+		# warning-ignore:return_value_discarded
 		_make_api_req(
 			"/api/bola/account",
 			"_on_get_account",
@@ -85,9 +102,14 @@ func _on_login_completed(result: int, response_code: int, _headers: PoolStringAr
 		
 		emit_signal("login_succeeded")
 	
-	elif response_code == HTTPClient.RESPONSE_UNAUTHORIZED or response_code == HTTPClient.RESPONSE_BAD_REQUEST:
+	elif signup:
+		emit_signal("signup_failed", body.get_string_from_utf8())
+	
+	elif response_code == HTTPClient.RESPONSE_UNAUTHORIZED:
 		emit_signal("login_bad_credentials")
-		return
+	
+	elif response_code == HTTPClient.RESPONSE_BAD_REQUEST:
+		emit_signal("nonexistent_user")
 	
 	else:
 		print_debug("Unexpected response_code: ", response_code)
@@ -120,7 +142,6 @@ func _on_get_account(result: int, response_code: int, _headers: PoolStringArray,
 
 func win_tournament(current_week: int):
 	# warning-ignore:return_value_discarded
-	print_debug("Tournament win sent")
 	_make_api_req(
 		"/api/bola/tournament",
 		"",

@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=1]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=2]
+[ext_resource path="res://src/singletons/mangle_api.gd" type="Script" id=3]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends VBoxContainer
@@ -9,6 +10,8 @@ script/source = "extends VBoxContainer
 
 onready var username: LineEdit = $Login/Username
 onready var password: LineEdit = $Login/Password
+onready var login: Button = $Login/HBoxContainer/Button
+onready var sign_up: Button = $Login/HBoxContainer/Button2
 
 
 func _ready():
@@ -21,11 +24,13 @@ func _ready():
 	$Account.hide()
 	# warning-ignore-all:return_value_discarded
 	MangleApi.connect(\"login_succeeded\", self, \"_on_logged_in\")
-	MangleApi.connect(\"login_bad_credentials\", self, \"_on_login_failed\")
+	MangleApi.connect(\"login_bad_credentials\", self, \"_on_bad_credentials\")
 	MangleApi.connect(\"account_retrieved\", self, \"_on_account_retrieved\")
+	MangleApi.connect(\"nonexistent_user\", self, \"_on_nonexistent_user\")
+	MangleApi.connect(\"signup_failed\", self, \"_on_signup_failed\")
 
 
-func _on_text_entered(_new_text=null):
+func _on_login(_new_text=null):
 	if username.text.empty() or password.text.empty():
 		return
 	
@@ -33,7 +38,21 @@ func _on_text_entered(_new_text=null):
 	MangleApi.login(password.text)
 	username.editable = false
 	password.editable = false
-	$Login/Button.disabled = true
+	login.disabled = true
+	sign_up.disabled = true
+	$Login/Label.text = \"\"
+
+
+func _on_signup():
+	if username.text.empty() or password.text.empty():
+		return
+	
+	MangleApi.username = username.text
+	MangleApi.signup(password.text)
+	username.editable = false
+	password.editable = false
+	login.disabled = true
+	sign_up.disabled = true
 	$Login/Label.text = \"\"
 
 
@@ -51,11 +70,26 @@ func _on_account_retrieved():
 	$Account/Tournament.text += str(MangleApi.account_data.tournament_wins)
 
 
-func _on_login_failed():
+func _reset():
 	username.editable = true
 	password.editable = true
-	$Login/Button.disabled = false
-	$Login/Label.text = \"Login Failed\"
+	login.disabled = false
+	sign_up.disabled = false
+
+
+func _on_bad_credentials():
+	$Login/Label.text = \"Incorrect password\"
+	_reset()
+
+
+func _on_nonexistent_user():
+	$Login/Label.text = \"Username does not exist\"
+	_reset()
+
+
+func _on_signup_failed(msg: String):
+	$Login/Label.text = msg
+	_reset()
 "
 
 [node name="AccountMenu" type="VBoxContainer"]
@@ -96,11 +130,29 @@ secret = true
 expand_to_text_length = true
 placeholder_text = "Password"
 
-[node name="Button" type="Button" parent="Login"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Login"]
 margin_top = 114.0
 margin_right = 360.0
 margin_bottom = 157.0
+alignment = 1
+
+[node name="Button" type="Button" parent="Login/HBoxContainer"]
+margin_left = 37.0
+margin_right = 132.0
+margin_bottom = 43.0
 text = "LOGIN"
+
+[node name="Control" type="Control" parent="Login/HBoxContainer"]
+margin_left = 136.0
+margin_right = 186.0
+margin_bottom = 43.0
+rect_min_size = Vector2( 50, 0 )
+
+[node name="Button2" type="Button" parent="Login/HBoxContainer"]
+margin_left = 190.0
+margin_right = 323.0
+margin_bottom = 43.0
+text = "SIGN UP"
 
 [node name="Label" type="Label" parent="Login"]
 margin_top = 161.0
@@ -145,6 +197,7 @@ margin_right = 360.0
 margin_bottom = 231.0
 text = "Tournament Wins: "
 align = 1
+script = ExtResource( 3 )
 
 [node name="Control" type="Control" parent="Account"]
 margin_top = 235.0
@@ -162,6 +215,5 @@ text = "BACK"
 script = ExtResource( 2 )
 path = "res://scenes/ui/main_menu.tscn"
 
-[connection signal="text_entered" from="Login/Username" to="." method="_on_text_entered"]
-[connection signal="text_entered" from="Login/Password" to="." method="_on_text_entered"]
-[connection signal="pressed" from="Login/Button" to="." method="_on_text_entered"]
+[connection signal="pressed" from="Login/HBoxContainer/Button" to="." method="_on_login"]
+[connection signal="pressed" from="Login/HBoxContainer/Button2" to="." method="_on_signup"]
