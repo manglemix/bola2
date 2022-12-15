@@ -29,7 +29,6 @@ export var difficulty := 1
 
 var old_platform_root: Node2D
 var platform_root: Node2D
-var platform_tweens := []
 var dying := false
 
 onready var generator: ClassicMapGenerator = $ClassicMapGenerator
@@ -73,15 +72,13 @@ func add_platform(platform_data: GeneratedPlatform):
 	platform.build(platform_data.start_origin, platform_data.end_origin, platform_data.thickness)
 	platform.modulate.a = 0
 	
-	var tween := Tween.new()
 	var delay := clamp(- platform.position.y * FADE_IN_DELAY_MODIFIER, 0.1, INF)
-	# warning-ignore:return_value_discarded
-	tween.interpolate_property(platform, \"modulate:a\", 0, 1.0, 0.5, Tween.TRANS_QUAD, Tween.EASE_OUT, delay)
-	platform.add_child(tween)
+	
 	var audio_player := PLATFORM_BUILD_SOUND.instance()
 	var audio_timer := Timer.new()
 	audio_timer.wait_time = delay
 	audio_timer.one_shot = true
+	audio_timer.autostart = true
 	# warning-ignore:return_value_discarded
 	audio_timer.connect(\"timeout\", audio_player, \"play\")
 	# warning-ignore:return_value_discarded
@@ -89,19 +86,26 @@ func add_platform(platform_data: GeneratedPlatform):
 	audio_player.add_child(audio_timer)
 	platform.add_child(audio_player)
 	
-	platform_tweens.append([tween, platform, audio_timer])
-	
 	platform_root.call_deferred(\"add_child\", platform)
+	
+	yield(platform, \"tree_entered\")
+	var tween := platform.create_tween()
+	var tweener := tween.tween_property(platform, \"modulate:a\", 1.0, 0.5)
+	# warning-ignore-all:return_value_discarded
+	tweener.set_delay(delay)
+	tweener.set_trans(Tween.TRANS_QUAD)
+	tweener.set_ease(Tween.EASE_OUT)
 
 
 func finish_generation():
-	for data in platform_tweens:
-		if !data[0].is_inside_tree():
-			yield(data[0], \"tree_entered\")
-		data[0].start()
-		if !data[2].is_inside_tree():
-			yield(data[2], \"tree_entered\")
-		data[2].start()
+#	for data in platform_tweens:
+#		if !data[0].is_inside_tree():
+#			yield(data[0], \"tree_entered\")
+#		data[0].start()
+#		if !data[2].is_inside_tree():
+#			yield(data[2], \"tree_entered\")
+#		data[2].start()
+	pass
 
 
 func on_player_died():
@@ -136,7 +140,6 @@ func on_player_died():
 	platform_root.queue_free()
 	platform_root = Node2D.new()
 	call_deferred(\"add_child\", platform_root)
-	platform_tweens.clear()
 	first_platform.modulate.a = next_platform_alpha
 	yield(first_platform, \"touched\")
 	first_platform.play_sound()
@@ -170,23 +173,14 @@ func on_next_platform_reached():
 	
 	var height := generator.grid_cell_size * generator.map_grid_height
 	
-	for data in platform_tweens:
-		var tween: Tween = data[0]
-		var platform: Node2D = data[1]
-		
-		if !is_instance_valid(platform):
-			continue
-		
-		# warning-ignore:return_value_discarded
-		tween.remove_all()
-		# warning-ignore:return_value_discarded
-		tween.interpolate_property(platform, \"modulate:a\", 1.0, 0, 0.5, Tween.TRANS_QUAD, Tween.EASE_OUT, (height + platform.position.y) * FADE_IN_DELAY_MODIFIER)
-		# warning-ignore:return_value_discarded
-		tween.connect(\"tween_all_completed\", platform, \"queue_free\")
-		# warning-ignore:return_value_discarded
-		tween.start()
-	
-	platform_tweens.clear()
+	for platform in platform_root.get_children():
+		var tween: SceneTreeTween = platform.create_tween()
+		var tweener := tween.tween_property(platform, \"modulate:a\", 0.0, 0.5)
+		# warning-ignore-all:return_value_discarded
+		tweener.set_trans(Tween.TRANS_QUAD)
+		tweener.set_ease(Tween.EASE_OUT)
+		tweener.set_delay((height + platform.position.y) * FADE_IN_DELAY_MODIFIER)
+		tweener.connect(\"finished\", platform, \"queue_free\")
 	
 	# the order of increments must be preserved
 	# as it is relied on
@@ -221,14 +215,11 @@ func on_next_platform_reached():
 
 
 func fade_in_first_platform():
-	var tween := Tween.new()
+	var tween := first_platform.create_tween()
 	# warning-ignore:return_value_discarded
-	tween.interpolate_property(first_platform, \"modulate:a\", next_platform_alpha, 1.0, 0.3, Tween.TRANS_QUAD, Tween.EASE_OUT)
-	first_platform.add_child(tween)
-	# warning-ignore:return_value_discarded
-	tween.connect(\"tween_all_completed\", tween, \"queue_free\")
-	# warning-ignore:return_value_discarded
-	tween.start()
+	var tweener := tween.tween_property(first_platform, \"modulate:a\", 1.0, 0.3)
+	tweener.set_trans(Tween.TRANS_QUAD)
+	tweener.set_ease(Tween.EASE_OUT)
 "
 
 [sub_resource type="Curve" id=2]
