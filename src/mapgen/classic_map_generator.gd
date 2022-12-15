@@ -23,15 +23,15 @@ func generate() -> void:
 		var start_origin := Vector2(
 			# warning-ignore:integer_division
 			# warning-ignore:integer_division
-			rand_range(- map_grid_width / 2, map_grid_width / 2),
-			- rand_range(0, map_grid_height)
-		).round()
+			rng.randi_range(- map_grid_width / 2, map_grid_width / 2),
+			- rng.randi_range(0, map_grid_height)
+		)
 		
-		var angle := deg2rad(platform_angle_distribution.interpolate(randf()))
-		if randf() < 0.5:
+		var angle := deg2rad(platform_angle_distribution.interpolate(rng.randf()))
+		if rng.randf() < 0.5:
 			angle *= -1
 		
-		var travel := (Vector2.RIGHT * platform_length_distribution.interpolate(randf())) \
+		var travel := (Vector2.RIGHT * platform_length_distribution.interpolate(rng.randf())) \
 			.rotated(angle) \
 			.round()
 		
@@ -67,7 +67,7 @@ func generate() -> void:
 			continue
 		
 		origins.append([start_origin, end_origin])
-		var platform_type_sample := randf()
+		var platform_type_sample := rng.randf()
 		var platform_type
 
 		if platform_type_sample <= normal_platform_probability:

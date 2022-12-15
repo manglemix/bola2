@@ -29,13 +29,6 @@ func get_time_until() -> int:
 	return until - OS.get_system_time_secs()
 
 
-func seed_rng():
-	if enabled:
-		seed(tournament_seed + _win_count)
-	else:
-		randomize()
-
-
 func win_level():
 	_win_count += 1
 	

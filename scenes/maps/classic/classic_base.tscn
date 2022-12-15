@@ -40,12 +40,19 @@ onready var next_platform_alpha: float = next_platform.modulate.a
 onready var min_transition_height: float = (HEAD_CELL_COUNT - generator.map_grid_height) * generator.grid_cell_size
 
 
+func _generate():
+	if Tournament.enabled:
+		generator.seed_rng(Tournament.tournament_seed)
+	else:
+		generator.seed_rng(randi())
+	generator.generate()
+
+
 func _ready():
 	platform_root = Node2D.new()
 	platform_root.name = \"PlatformRoot\"
 	add_child(platform_root)
-	Tournament.seed_rng()
-	generator.generate()
+	_generate()
 
 
 func add_platform(platform_data: GeneratedPlatform):
@@ -138,8 +145,7 @@ func on_player_died():
 	player_velocity.y = clamp(player_velocity.y, - MAX_RESPAWN_Y_SPEED, 0)
 	player.queue_velocity_set(player_velocity)
 	fade_in_first_platform()
-	Tournament.seed_rng()
-	generator.generate()
+	_generate()
 
 
 const RESET_PADDING := 0
@@ -147,6 +153,7 @@ const RESET_PADDING := 0
 
 func on_next_platform_reached():
 	Tournament.win_level()
+	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
 	var new_player_position := Vector2(player.position.x, first_platform.position.y + (player.position.y - next_platform.position.y - RESET_PADDING))
 	var player_velocity := player.linear_velocity
 	var offset := new_player_position - player.position
@@ -180,8 +187,6 @@ func on_next_platform_reached():
 		tween.start()
 	
 	platform_tweens.clear()
-	
-	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
 	
 	# the order of increments must be preserved
 	# as it is relied on
@@ -251,9 +256,9 @@ func _input(event):
 
 
 func on_exit_pressed():
-	get_tree().paused = false
 	# warning-ignore:return_value_discarded
 	get_tree().change_scene(\"res://scenes/ui/play/play_menu.tscn\")
+	get_tree().paused = false
 "
 
 [sub_resource type="GDScript" id=7]
