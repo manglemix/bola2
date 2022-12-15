@@ -1,10 +1,18 @@
 class_name PlatformTools
 
 
-const VISIBLE_MESHES := true
+const RECT_SCENE := preload("res://scenes/platforms/rect.tscn")
+const SEMICIRCLE_SCENE := preload("res://scenes/platforms/semicircle.tscn")
 
 
+static func is_platforms_visible() -> bool:
+	return ProjectSettings.get_setting("constants/debug_data/visible_platforms")
+
+
+# TODO Use Polygon2D
 static func base_platformify(node: Node2D, start_origin: Vector2, end_origin: Vector2, thickness: int):
+	var visible_platforms := is_platforms_visible()
+	
 	var travel := end_origin - start_origin
 	node.position = start_origin + travel / 2
 	node.rotation = travel.angle()
@@ -34,38 +42,25 @@ static func base_platformify(node: Node2D, start_origin: Vector2, end_origin: Ve
 	collision_shape_node.name = "RightCapShape"
 	node.add_child(collision_shape_node)
 	
-	var mesh_shape: PrimitiveMesh = QuadMesh.new()
-	mesh_shape.size = platform_size
-	var mesh_node := MeshInstance2D.new()
-	mesh_node.mesh = mesh_shape
+	var mesh_node: Node2D = RECT_SCENE.instance()
+	mesh_node.scale = platform_size
 	mesh_node.name = "BarMesh"
-	mesh_node.visible = VISIBLE_MESHES
+	mesh_node.visible = visible_platforms
 	node.add_child(mesh_node)
 	
-	mesh_shape = SphereMesh.new()
-	# warning-ignore:integer_division
-	mesh_shape.radius = thickness / 2
-	# warning-ignore:integer_division
-	mesh_shape.height = thickness / 2
-	mesh_shape.rings = 4
-	mesh_shape.radial_segments = 8
-	mesh_node.visible = VISIBLE_MESHES
-	mesh_shape.is_hemisphere = true
-	
-	mesh_node = MeshInstance2D.new()
-	mesh_node.mesh = mesh_shape
+	mesh_node = SEMICIRCLE_SCENE.instance()
+	mesh_node.scale = Vector2(thickness, thickness)
 	mesh_node.position.x = - width / 2
-	mesh_node.rotation_degrees = 90
+	mesh_node.rotation_degrees = 180
 	mesh_node.name = "LeftCapMesh"
-	mesh_node.visible = VISIBLE_MESHES
+	mesh_node.visible = visible_platforms
 	node.add_child(mesh_node)
 	
-	mesh_node = MeshInstance2D.new()
-	mesh_node.mesh = mesh_shape
+	mesh_node = SEMICIRCLE_SCENE.instance()
+	mesh_node.scale = Vector2(thickness, thickness)
 	mesh_node.position.x = width / 2
-	mesh_node.rotation_degrees = 270
 	mesh_node.name = "RightCapMesh"
-	mesh_node.visible = VISIBLE_MESHES
+	mesh_node.visible = visible_platforms
 	node.add_child(mesh_node)
 
 

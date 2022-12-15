@@ -1,0 +1,4 @@
+[gd_scene format=2]
+
+[node name="Polygon2D" type="Polygon2D"]
+polygon = PoolVector2Array( 0, 0.5, 0, -0.5, 0.25, -0.433, 0.433, -0.25, 0.5, 0, 0.433, 0.25, 0.25, 0.433 )

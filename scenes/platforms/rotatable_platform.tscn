@@ -7,7 +7,8 @@
 script/source = "extends RigidBody2D
 
 const DENSITY := 0.2
-const BOUNCE_MODIFIER := 0.0007
+# Higher is less bounce
+const BOUNCE_MODIFIER := 0.001
 
 onready var _stream: AudioStreamPlayer2D = $AudioStreamPlayer2D
 onready var _origin := position

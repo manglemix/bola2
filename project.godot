@@ -62,7 +62,7 @@ _global_script_classes=[ {
 "base": "Reference",
 "class": "PlatformTools",
 "language": "GDScript",
-"path": "res://src/platforms/platform_tools.gd"
+"path": "res://scenes/platforms/platform_tools.gd"
 }, {
 "base": "RigidBody2D",
 "class": "SiblingFragilePlatform",
@@ -112,6 +112,7 @@ Tournament="*res://src/singletons/tournament.gd"
 [constants]
 
 debug_data/app_version="8"
+debug_data/visible_platforms=true
 
 [display]
 

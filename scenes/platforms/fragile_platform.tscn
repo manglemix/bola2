@@ -62,34 +62,29 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 	
 	if abs(contact_point.x) < _width * (1 - SPLIT_PADDING_FRACTION) / 2:
 		var total_mass := mass
-		var bar_mesh: MeshInstance2D = $BarMesh
+		var bar_mesh: Polygon2D = $BarMesh
 		
 		$LeftCapShape.position.x = - (_width / 2 + contact_point.x) / 2
 		$LeftCapMesh.position.x = - (_width / 2 + contact_point.x) / 2
-		bar_mesh.mesh.size.x = _width / 2 + contact_point.x
-		var offset: Vector2 = global_transform.x * (_width / 2 - bar_mesh.mesh.size.x / 2)
-#		visible = false
-		var thickness: float = bar_mesh.mesh.size.y
+		bar_mesh.scale.x = _width / 2 + contact_point.x
+		var offset: Vector2 = global_transform.x * (_width / 2 - bar_mesh.scale.x / 2)
+		var thickness: float = bar_mesh.scale.y
 		bar_mesh.position.x = 0
-		mass = total_mass * bar_mesh.mesh.size.x / _width
+		mass = total_mass * bar_mesh.scale.x / _width
 		
 		var bar_shape: CollisionShape2D = $BarShape
-		bar_shape.shape.extents.x = bar_mesh.mesh.size.x / 2
+		bar_shape.shape.extents.x = bar_mesh.scale.x / 2
 		bar_shape.position.x = 0
 		
 		sibling = SiblingFragilePlatform.new()
 		sibling.modulate = modulate
 		sibling.collision_layer = collision_layer
 		sibling.collision_mask = collision_mask
-#		sibling.visible = false
 
-		bar_mesh = MeshInstance2D.new()
-		var mesh := QuadMesh.new()
-		mesh.size = Vector2(_width / 2 - contact_point.x, thickness)
-		bar_mesh.mesh = mesh
-#		bar_mesh.position.x = (_width - mesh.size.x) / 2
-		bar_mesh.visible = PlatformTools.VISIBLE_MESHES
-		sibling.mass = total_mass * bar_mesh.mesh.size.x / _width
+		bar_mesh = PlatformTools.RECT_SCENE.instance()
+		bar_mesh.scale = Vector2(_width / 2 - contact_point.x, thickness)
+		bar_mesh.visible = PlatformTools.is_platforms_visible()
+		sibling.mass = total_mass * bar_mesh.scale.x / _width
 		sibling.add_child(bar_mesh)
 
 		var right_cap := $RightCapMesh
@@ -103,13 +98,11 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 
 		bar_shape = CollisionShape2D.new()
 		bar_shape.shape = RectangleShape2D.new()
-		bar_shape.shape.extents = Vector2(bar_mesh.mesh.size.x, thickness) / 2
-#		bar_shape.position.x = mesh.size.x / 2
+		bar_shape.shape.extents = Vector2(bar_mesh.scale.x, thickness) / 2
 		sibling.add_child(bar_shape)
 
 		sibling.transform = global_transform
-		sibling.position += global_transform.x * (_width / 2 - bar_mesh.mesh.size.x / 2)
-#		global_position -= offset
+		sibling.position += global_transform.x * (_width / 2 - bar_mesh.scale.x / 2)
 		get_parent().call_deferred(\"add_child\", sibling)
 		
 		sibling._tween = Tween.new()
