@@ -109,6 +109,10 @@ MangleApi="*res://src/singletons/mangle_api.gd"
 Initializer="*res://src/singletons/initializer.gd"
 Tournament="*res://src/singletons/tournament.gd"
 
+[constants]
+
+debug_data/app_version="8"
+
 [display]
 
 window/size/width=360
