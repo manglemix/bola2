@@ -24,6 +24,8 @@ func build(start_origin: Vector2, end_origin: Vector2, thickness: int):
 
 func _integrate_forces(state: Physics2DDirectBodyState):
 	if mode == MODE_KINEMATIC:
+		# We use _final_angular_velocity because for some reason
+		# angular_velocity is set to 0 while mode is MODE_KINEMATIC
 		rotate(_final_angular_velocity * state.step)
 	else:
 		state.transform.origin = _origin
