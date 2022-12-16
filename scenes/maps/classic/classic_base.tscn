@@ -86,7 +86,7 @@ func add_platform(platform_data: GeneratedPlatform):
 	audio_player.add_child(audio_timer)
 	platform.add_child(audio_player)
 	
-	platform_root.call_deferred(\"add_child\", platform)
+	platform_root.call_deferred(\"add_child\", platform, true)
 	
 	yield(platform, \"tree_entered\")
 	var tween := platform.create_tween()
@@ -98,13 +98,6 @@ func add_platform(platform_data: GeneratedPlatform):
 
 
 func finish_generation():
-#	for data in platform_tweens:
-#		if !data[0].is_inside_tree():
-#			yield(data[0], \"tree_entered\")
-#		data[0].start()
-#		if !data[2].is_inside_tree():
-#			yield(data[2], \"tree_entered\")
-#		data[2].start()
 	pass
 
 
@@ -157,6 +150,7 @@ const RESET_PADDING := 0
 func on_next_platform_reached():
 	Tournament.win_level()
 	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
+	
 	var new_player_position := Vector2(player.position.x, first_platform.position.y + (player.position.y - next_platform.position.y - RESET_PADDING))
 	var player_velocity := player.linear_velocity
 	var offset := new_player_position - player.position
@@ -168,8 +162,6 @@ func on_next_platform_reached():
 			child.prepare_for_advancement(offset)
 	
 	yield(get_tree(), \"idle_frame\")
-	
-	FrameBlocker.add_block()
 	
 	var height := generator.grid_cell_size * generator.map_grid_height
 	
@@ -189,17 +181,8 @@ func on_next_platform_reached():
 	
 	first_platform.modulate.a = next_platform_alpha
 	
-	player.queue_velocity_set(player_velocity)
-	player.queue_position_set(new_player_position)
+	player.position = new_player_position
 	platform_root.position.y -= next_platform.position.y - first_platform.position.y
-	yield(player, \"position_set\")
-	yield(get_tree(), \"physics_frame\")
-	yield(get_tree(), \"physics_frame\")
-	
-	first_platform.play_sound()
-	fade_in_first_platform()
-	
-	FrameBlocker.remove_block()
 	
 	if old_platform_root != null:
 		old_platform_root.queue_free()
@@ -211,7 +194,12 @@ func on_next_platform_reached():
 	platform_root.name = \"PlatformRoot\"
 	add_child(platform_root)
 	
+	first_platform.play_sound()
+	fade_in_first_platform()
+	
 	generator.generate()
+	yield(get_tree(), \"physics_frame\")
+	player.linear_velocity = player_velocity
 
 
 func fade_in_first_platform():

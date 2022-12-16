@@ -10,6 +10,8 @@ const DENSITY := 0.2
 # Higher is less bounce
 const BOUNCE_MODIFIER := 0.001
 
+var _final_angular_velocity: float
+
 onready var _stream: AudioStreamPlayer2D = $AudioStreamPlayer2D
 onready var _origin := position
 onready var _variable_volume: VariableVolume = $VariableVolume
@@ -21,8 +23,8 @@ func build(start_origin: Vector2, end_origin: Vector2, thickness: int):
 
 
 func _integrate_forces(state: Physics2DDirectBodyState):
-	if mode == RigidBody2D.MODE_KINEMATIC:
-		state.transform = state.transform.rotated(state.angular_velocity * state.step)
+	if mode == MODE_KINEMATIC:
+		rotate(_final_angular_velocity * state.step)
 	else:
 		state.transform.origin = _origin
 		state.linear_velocity = Vector2.ZERO
@@ -44,17 +46,17 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 
 
 func prepare_for_advancement(_offset):
-	call_deferred(\"set_mode\", RigidBody2D.MODE_KINEMATIC)
+	_final_angular_velocity = angular_velocity
+	call_deferred(\"set_mode\", MODE_KINEMATIC)
 "
 
-[node name="RigidBody2D" type="RigidBody2D"]
+[node name="Rotatable" type="RigidBody2D"]
 modulate = Color( 0.2, 0.2, 1, 1 )
 collision_mask = 2
 gravity_scale = 0.0
-custom_integrator = true
 contacts_reported = 1
 contact_monitor = true
-angular_damp = 2.0
+angular_damp = 0.0
 script = SubResource( 1 )
 
 [node name="VariableVolume" type="Node" parent="."]

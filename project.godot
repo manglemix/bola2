@@ -104,14 +104,14 @@ config/icon="res://icon.png"
 
 [autoload]
 
-FrameBlocker="*res://src/singletons/frame_blocker.gd"
+FrameBlocker="res://src/singletons/frame_blocker.gd"
 MangleApi="*res://src/singletons/mangle_api.gd"
 Initializer="*res://src/singletons/initializer.gd"
 Tournament="*res://src/singletons/tournament.gd"
 
 [constants]
 
-debug_data/app_version="8"
+debug_data/app_version="4"
 debug_data/visible_platforms=true
 
 [display]

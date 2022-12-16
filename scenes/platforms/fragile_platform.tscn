@@ -58,7 +58,7 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 	timer.connect(\"timeout\", self, \"set_collision_layer\", [0])
 	add_child(timer)
 	var sibling: SiblingFragilePlatform = null
-	FrameBlocker.add_block()
+#	FrameBlocker.add_block()
 	
 	if abs(contact_point.x) < _width * (1 - SPLIT_PADDING_FRACTION) / 2:
 		var total_mass := mass
@@ -120,7 +120,7 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 		state.transform.origin -= offset
 		
 	yield(get_tree(), \"idle_frame\")
-	FrameBlocker.remove_block()
+#	FrameBlocker.remove_block()
 	# warning-ignore:return_value_discarded
 	_tween.start()
 	timer.start()
@@ -164,7 +164,7 @@ func prepare_for_advancement(offset: Vector2):
 	_offset = offset
 "
 
-[node name="RigidBody2D" type="RigidBody2D"]
+[node name="Fragile" type="RigidBody2D"]
 modulate = Color( 1, 0.2, 0.2, 1 )
 collision_mask = 2
 mode = 3
