@@ -1,24 +1,11 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=2 format=2]
 
-[sub_resource type="SphereMesh" id=1]
-radius = 10.0
-height = 20.0
-radial_segments = 24
-rings = 12
+[ext_resource path="res://scenes/skins/ball/classic_white.tscn" type="PackedScene" id=1]
 
-[sub_resource type="PrismMesh" id=2]
-size = Vector3( 7, 6, 0 )
-
-[node name="Stranger" type="MeshInstance2D"]
-modulate = Color( 0.560784, 0.560784, 0.560784, 1 )
+[node name="Polygon2D" instance=ExtResource( 1 )]
+modulate = Color( 0.505882, 0.505882, 0.505882, 1 )
 scale = Vector2( 1.5, 1.5 )
-mesh = SubResource( 1 )
 
-[node name="MeshInstance2D" type="MeshInstance2D" parent="."]
-modulate = Color( 0, 0, 0, 1 )
-position = Vector2( 0, -4.5 )
-mesh = SubResource( 2 )
-
-[node name="Polygon2D" type="Polygon2D" parent="."]
+[node name="Polygon2D2" type="Polygon2D" parent="." index="1"]
 color = Color( 0, 0, 0, 1 )
 polygon = PoolVector2Array( 7.53151, -7.37479, 9.11694, -5.03248, 7.3031, -2.66628, 5.21309, -2.39009, 4.70851, 0.228397, 2.36621, 1.81382, 3.52541, -0.67852, 3.50153, -4.07779, 5.71768, -5.00859 )

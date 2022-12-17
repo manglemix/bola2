@@ -98,7 +98,7 @@ _global_script_class_icons={
 
 [application]
 
-config/name="Bola 2"
+config/name="Bola"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/icon="res://icon.png"
 
