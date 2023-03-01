@@ -4,13 +4,10 @@
 script/source = "extends HBoxContainer
 
 
-func initialize(username: String, level: int):
+func initialize(username: String, level: int, rank: int):
 	$Username.text = username
 	$Level.text = str(level)
-
-
-func set_rank(value: int):
-	$HBoxContainer/Rank.text = str(value)
+	$HBoxContainer/Rank.text = str(rank)
 "
 
 [node name="HBoxContainer" type="HBoxContainer"]

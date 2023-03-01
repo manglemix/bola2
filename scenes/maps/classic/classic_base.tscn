@@ -149,7 +149,7 @@ const RESET_PADDING := 0
 
 func on_next_platform_reached():
 	Tournament.win_level()
-	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
+#	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
 	
 	var new_player_position := Vector2(player.position.x, first_platform.position.y + (player.position.y - next_platform.position.y - RESET_PADDING))
 	var player_velocity := player.linear_velocity
@@ -316,7 +316,7 @@ func reset_counter():
 
 
 func _input(event):
-	if event.is_action_pressed(\"ui_accept\"):
+	if event.is_action_pressed(\"cheat_win\"):
 		print_debug(\"Cheat win!\")
 		var player: ActiveAgent = $\"../Player\"
 		player.queue_position_set(position + Vector2(0, -30))

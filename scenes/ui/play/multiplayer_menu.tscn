@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://fonts/JetBrainsMono-Bold.woff2" type="DynamicFontData" id=1]
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=2]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=3]
+[ext_resource path="res://addons/MaxSizeContainer/max_size_container.gd" type="Script" id=4]
 
 [sub_resource type="DynamicFont" id=3]
 size = 64
@@ -15,45 +16,94 @@ theme = ExtResource( 2 )
 alignment = 1
 
 [node name="Label" type="Label" parent="."]
-margin_top = 272.0
+margin_top = 241.0
 margin_right = 418.0
-margin_bottom = 358.0
+margin_bottom = 327.0
 size_flags_horizontal = 4
 custom_fonts/font = SubResource( 3 )
 text = "MULTIPLAYER"
 align = 1
 
 [node name="Control" type="Control" parent="."]
-margin_top = 362.0
+margin_top = 331.0
 margin_right = 418.0
-margin_bottom = 387.0
+margin_bottom = 356.0
 rect_min_size = Vector2( 0, 25 )
 
-[node name="Button" type="Button" parent="."]
-margin_left = 171.0
-margin_top = 391.0
-margin_right = 247.0
-margin_bottom = 434.0
-size_flags_horizontal = 4
-disabled = true
-text = "RACE"
-script = ExtResource( 3 )
+[node name="MaxSize" type="MarginContainer" parent="."]
+margin_top = 360.0
+margin_right = 418.0
+margin_bottom = 472.0
+size_flags_horizontal = 3
+custom_constants/margin_right = 0
+custom_constants/margin_top = 0
+custom_constants/margin_left = 0
+custom_constants/margin_bottom = 0
+script = ExtResource( 4 )
+max_size = Vector2( 500, -1 )
 
-[node name="Button2" type="Button" parent="."]
-margin_left = 161.0
-margin_top = 438.0
-margin_right = 256.0
-margin_bottom = 481.0
-size_flags_horizontal = 4
-disabled = true
-text = "CO-OP"
-script = ExtResource( 3 )
+[node name="TabContainer" type="TabContainer" parent="MaxSize"]
+margin_right = 418.0
+margin_bottom = 112.0
+
+[node name="Race" type="VBoxContainer" parent="MaxSize/TabContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 61.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MaxSize/TabContainer/Race"]
+margin_right = 410.0
+margin_bottom = 43.0
+alignment = 1
+
+[node name="Button" type="Button" parent="MaxSize/TabContainer/Race/HBoxContainer"]
+margin_left = 167.0
+margin_right = 243.0
+margin_bottom = 43.0
+text = "HOST"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MaxSize/TabContainer/Race"]
+margin_top = 47.0
+margin_right = 410.0
+margin_bottom = 47.0
+
+[node name="CO-OP" type="VBoxContainer" parent="MaxSize/TabContainer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 61.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MaxSize/TabContainer/CO-OP"]
+margin_right = 410.0
+margin_bottom = 43.0
+alignment = 1
+
+[node name="Button" type="Button" parent="MaxSize/TabContainer/CO-OP/HBoxContainer"]
+margin_left = 167.0
+margin_right = 243.0
+margin_bottom = 43.0
+text = "HOST"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MaxSize/TabContainer/CO-OP"]
+margin_right = 410.0
+
+[node name="Control2" type="Control" parent="."]
+margin_top = 476.0
+margin_right = 418.0
+margin_bottom = 511.0
+rect_min_size = Vector2( 0, 35 )
 
 [node name="Button3" type="Button" parent="."]
 margin_left = 171.0
-margin_top = 485.0
+margin_top = 515.0
 margin_right = 247.0
-margin_bottom = 528.0
+margin_bottom = 558.0
 size_flags_horizontal = 4
 text = "BACK"
 script = ExtResource( 3 )

@@ -6,70 +6,79 @@
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=4]
 
 [sub_resource type="GDScript" id=1]
-script/source = "extends VBoxContainer
+script/source = "# TODO Improve
+extends VBoxContainer
 
 
 const ENTRY_SCENE := preload(\"res://scenes/ui/leaderboard/entry.tscn\")
 
-var leaderboard_entries := [{}, {}, {}]
-
 onready var easy: Control = $MaxSize/TabContainer/Easy
 onready var normal: Control = $MaxSize/TabContainer/Normal
 onready var expert: Control = $MaxSize/TabContainer/Expert
-onready var loading: Control = $Loading
-onready var leaderboards: Control = $MaxSize
 
 
 func _ready():
-	leaderboards.hide()
-	MangleApi.sync_leaderboard = true
+	if not MangleApi.connected:
+		$MaxSize.hide()
+		yield(MangleApi, \"connected\")
+		$MaxSize.show()
+	$Connecting.hide()
+	MangleApi.watch_leaderboard()
+	_on_easy_update()
 	# warning-ignore:return_value_discarded
-	MangleApi.connect(\"new_leaderboard_entry\", self, \"_on_new_entry\")
+	MangleApi.connect(\"leaderboard_update\", self, \"_on_leaderboard_update\")
 
 
 func _exit_tree():
-	MangleApi.sync_leaderboard = false
+	MangleApi.cancel_watch_leaderboard()
 
 
-class Entry extends Reference:
-	var level: int
-	var entry: Control
+func _on_leaderboard_update():
+	if easy.visible:
+		_on_easy_update()
+	elif normal.visible:
+		_on_normal_update()
+	else:
+		_on_expert_update()
 
 
-func _on_new_entry(entry: MangleApi.LeaderboardEntryData):
-	loading.hide()
-	leaderboards.show()
-	var scene := ENTRY_SCENE.instance()
-	scene.initialize(entry.username, entry.levels)
-	
-	var difficulty_set: Dictionary = leaderboard_entries[entry.difficulty - 1]
-	
-	if entry.username in difficulty_set:
-		difficulty_set[entry.username].entry.queue_free()
-	
-	var obj := Entry.new()
-	obj.level = entry.levels
-	obj.entry = scene
-	
-	var values: Array = difficulty_set.values()
-	var parent: Control = [easy, normal, expert][entry.difficulty - 1]
-	
-	for pair in values:
-		parent.remove_child(pair.entry)
-	
-	difficulty_set[entry.username] = obj
-	values.append(obj)
-	values.sort_custom(self, \"_sort\")
-	
-	var i := 0
-	for pair in values:
-		pair.entry.set_rank(i + 1)
-		i += 1
-		parent.add_child(pair.entry)
+func _on_easy_update():
+	_on_x_update(easy, MangleApi.easy_leaderboard)
 
 
-static func _sort(a: Entry, b: Entry) -> bool:
-	return b.level < a.level
+func _on_normal_update():
+	_on_x_update(normal, MangleApi.normal_leaderboard)
+
+
+func _on_expert_update():
+	_on_x_update(expert, MangleApi.expert_leaderboard)
+
+
+func _on_x_update(difficulty_node: Node, leaderboard: Array):
+	var entry_parent := difficulty_node.get_child(1)
+	
+	for child in entry_parent.get_children():
+		child.queue_free()
+	
+	if leaderboard.empty():
+		return
+	
+	var idx := 1
+	for entry in leaderboard:
+		var entry_node := ENTRY_SCENE.instance()
+		entry_node.initialize(entry[\"username\"], entry[\"score\"], idx)
+		entry_parent.add_child(entry_node)
+		idx += 1
+
+
+func _on_tab_changed(tab):
+	match tab:
+		0:
+			_on_easy_update()
+		1:
+			_on_normal_update()
+		2:
+			_on_expert_update()
 "
 
 [node name="Leaderboards" type="VBoxContainer"]
@@ -80,17 +89,23 @@ alignment = 1
 script = SubResource( 1 )
 
 [node name="Label" type="Label" parent="."]
-margin_top = 308.0
+margin_top = 250.0
 margin_right = 360.0
-margin_bottom = 351.0
+margin_bottom = 293.0
 text = "ENDLESS"
 align = 1
 
-[node name="MaxSize" type="MarginContainer" parent="."]
-visible = false
-margin_top = 320.0
+[node name="Connecting" type="Label" parent="."]
+margin_top = 297.0
 margin_right = 360.0
-margin_bottom = 432.0
+margin_bottom = 340.0
+text = "Connecting..."
+align = 1
+
+[node name="MaxSize" type="MarginContainer" parent="."]
+margin_top = 344.0
+margin_right = 360.0
+margin_bottom = 456.0
 size_flags_horizontal = 3
 custom_constants/margin_right = 0
 custom_constants/margin_top = 0
@@ -150,25 +165,20 @@ margin_top = 47.0
 margin_right = 352.0
 margin_bottom = 47.0
 
-[node name="Loading" type="Label" parent="."]
-margin_top = 355.0
-margin_right = 360.0
-margin_bottom = 398.0
-text = "Loading..."
-align = 1
-
 [node name="Control" type="Control" parent="."]
-margin_top = 402.0
+margin_top = 460.0
 margin_right = 360.0
-margin_bottom = 445.0
+margin_bottom = 503.0
 rect_min_size = Vector2( 0, 43 )
 
 [node name="Button" type="Button" parent="."]
 margin_left = 142.0
-margin_top = 449.0
+margin_top = 507.0
 margin_right = 218.0
-margin_bottom = 492.0
+margin_bottom = 550.0
 size_flags_horizontal = 4
 text = "BACK"
 script = ExtResource( 4 )
 path = "res://scenes/ui/main_menu.tscn"
+
+[connection signal="tab_changed" from="MaxSize/TabContainer" to="." method="_on_tab_changed"]

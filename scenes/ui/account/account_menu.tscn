@@ -1,95 +1,70 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=1]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=2]
-[ext_resource path="res://src/singletons/mangle_api.gd" type="Script" id=3]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends VBoxContainer
 
 
-onready var username: LineEdit = $Login/Username
-onready var password: LineEdit = $Login/Password
-onready var login: Button = $Login/HBoxContainer/Button
-onready var sign_up: Button = $Login/HBoxContainer/Button2
+onready var login: Button = $Login/Button
 
 
 func _ready():
-	if MangleApi.is_logged_in():
-		_on_logged_in()
-		if MangleApi.account_data != null:
-			_on_account_retrieved()
-		return
-	
 	$Account.hide()
-	# warning-ignore-all:return_value_discarded
-	MangleApi.connect(\"login_succeeded\", self, \"_on_logged_in\")
-	MangleApi.connect(\"login_bad_credentials\", self, \"_on_bad_credentials\")
-	MangleApi.connect(\"account_retrieved\", self, \"_on_account_retrieved\")
-	MangleApi.connect(\"nonexistent_user\", self, \"_on_nonexistent_user\")
-	MangleApi.connect(\"signup_failed\", self, \"_on_signup_failed\")
-
-
-func _on_login(_new_text=null):
-	if username.text.empty() or password.text.empty():
+	$Login.hide()
+	$Connecting.hide()
+	
+	if not MangleApi.connected:
+		$Connecting.show()
+		yield(MangleApi, \"connected\")
+		$Connecting.hide()
+	
+	if MangleApi.is_logged_in:
+		_on_logged_in()
+		$Account.show()
 		return
 	
-	MangleApi.username = username.text
-	MangleApi.login(password.text)
-	username.editable = false
-	password.editable = false
-	login.disabled = true
-	sign_up.disabled = true
-	$Login/Label.text = \"\"
+	$Login.show()
 
 
-func _on_signup():
-	if username.text.empty() or password.text.empty():
+func _on_login():
+	$Login/LoginStatus.text = \"\"
+	var res = MangleApi.login()
+	if res == null:
+		$Login/LoginStatus.text = \"Failed to connect to server. Please try again later\"
 		return
-	
-	MangleApi.username = username.text
-	MangleApi.signup(password.text)
-	username.editable = false
-	password.editable = false
-	login.disabled = true
-	sign_up.disabled = true
-	$Login/Label.text = \"\"
+	yield(res, \"completed\")
+	_on_logged_in()
 
 
 func _on_logged_in():
+	if not MangleApi.is_logged_in:
+		return
+	
 	$Login.hide()
 	$Label.hide()
 	$Account.visible = true
-	$Account/Username.text = MangleApi.username
-
-
-func _on_account_retrieved():
+	$Account/Username.text = MangleApi.account_data.username
 	$Account/Easy.text += str(MangleApi.account_data.easy_highscore)
 	$Account/Normal.text += str(MangleApi.account_data.normal_highscore)
 	$Account/Expert.text += str(MangleApi.account_data.expert_highscore)
-	$Account/Tournament.text += str(MangleApi.account_data.tournament_wins)
+	$Account/Tournament.text += str(MangleApi.account_data.tournament_wins.size())
 
 
-func _reset():
-	username.editable = true
-	password.editable = true
-	login.disabled = false
-	sign_up.disabled = false
+func _on_logout_pressed():
+	var res = MangleApi.logout()
+	if res == null:
+		return
+	yield(res, \"completed\")
+	$Account.hide()
+	$Login.show()
+	$Label.show()
 
 
-func _on_bad_credentials():
-	$Login/Label.text = \"Incorrect password\"
-	_reset()
-
-
-func _on_nonexistent_user():
-	$Login/Label.text = \"Username does not exist\"
-	_reset()
-
-
-func _on_signup_failed(msg: String):
-	$Login/Label.text = msg
-	_reset()
+func _on_back_pressed():
+	if MangleApi.logging_in:
+		MangleApi.cancel_login()
 "
 
 [node name="AccountMenu" type="VBoxContainer"]
@@ -100,120 +75,95 @@ alignment = 1
 script = SubResource( 1 )
 
 [node name="Label" type="Label" parent="."]
-margin_top = 110.0
-margin_right = 360.0
-margin_bottom = 153.0
+margin_top = 120.0
+margin_right = 361.0
+margin_bottom = 163.0
 text = "ACCOUNT"
 align = 1
 
+[node name="Connecting" type="Label" parent="."]
+margin_top = 167.0
+margin_right = 361.0
+margin_bottom = 210.0
+text = "Connecting..."
+align = 1
+
 [node name="Login" type="VBoxContainer" parent="."]
-margin_top = 157.0
-margin_right = 360.0
-margin_bottom = 361.0
+margin_top = 214.0
+margin_right = 361.0
+margin_bottom = 304.0
 
-[node name="Username" type="LineEdit" parent="Login"]
-margin_left = 61.0
-margin_right = 299.0
-margin_bottom = 53.0
-size_flags_horizontal = 4
-max_length = 16
-expand_to_text_length = true
-placeholder_text = "Username"
-
-[node name="Password" type="LineEdit" parent="Login"]
-margin_left = 61.0
-margin_top = 57.0
-margin_right = 299.0
-margin_bottom = 110.0
-size_flags_horizontal = 4
-secret = true
-expand_to_text_length = true
-placeholder_text = "Password"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Login"]
-margin_top = 114.0
-margin_right = 360.0
-margin_bottom = 157.0
-alignment = 1
-
-[node name="Button" type="Button" parent="Login/HBoxContainer"]
-margin_left = 37.0
-margin_right = 132.0
+[node name="Button" type="Button" parent="Login"]
+margin_right = 361.0
 margin_bottom = 43.0
-text = "LOGIN"
+text = "Sign in with google"
 
-[node name="Control" type="Control" parent="Login/HBoxContainer"]
-margin_left = 136.0
-margin_right = 186.0
-margin_bottom = 43.0
-rect_min_size = Vector2( 50, 0 )
-
-[node name="Button2" type="Button" parent="Login/HBoxContainer"]
-margin_left = 190.0
-margin_right = 323.0
-margin_bottom = 43.0
-text = "SIGN UP"
-
-[node name="Label" type="Label" parent="Login"]
-margin_top = 161.0
-margin_right = 360.0
-margin_bottom = 204.0
+[node name="LoginStatus" type="Label" parent="Login"]
+margin_top = 47.0
+margin_right = 361.0
+margin_bottom = 90.0
 align = 1
 
 [node name="Account" type="VBoxContainer" parent="."]
-margin_top = 365.0
-margin_right = 360.0
-margin_bottom = 643.0
+margin_top = 308.0
+margin_right = 361.0
+margin_bottom = 586.0
 
 [node name="Username" type="Label" parent="Account"]
-margin_right = 360.0
+margin_right = 361.0
 margin_bottom = 43.0
 align = 1
 
 [node name="Easy" type="Label" parent="Account"]
 margin_top = 47.0
-margin_right = 360.0
+margin_right = 361.0
 margin_bottom = 90.0
 text = "Easy Highscore: "
 align = 1
 
 [node name="Normal" type="Label" parent="Account"]
 margin_top = 94.0
-margin_right = 360.0
+margin_right = 361.0
 margin_bottom = 137.0
 text = "Normal Highscore: "
 align = 1
 
 [node name="Expert" type="Label" parent="Account"]
 margin_top = 141.0
-margin_right = 360.0
+margin_right = 361.0
 margin_bottom = 184.0
 text = "Expert Highscore: "
 align = 1
 
 [node name="Tournament" type="Label" parent="Account"]
 margin_top = 188.0
-margin_right = 360.0
+margin_right = 361.0
 margin_bottom = 231.0
 text = "Tournament Wins: "
 align = 1
-script = ExtResource( 3 )
 
-[node name="Control" type="Control" parent="Account"]
+[node name="Logout" type="Button" parent="Account"]
 margin_top = 235.0
-margin_right = 360.0
+margin_right = 361.0
 margin_bottom = 278.0
+text = "Logout"
+
+[node name="Control" type="Control" parent="."]
+margin_top = 590.0
+margin_right = 361.0
+margin_bottom = 633.0
 rect_min_size = Vector2( 0, 43 )
 
-[node name="Button3" type="Button" parent="."]
+[node name="Back" type="Button" parent="."]
 margin_left = 142.0
-margin_top = 647.0
+margin_top = 637.0
 margin_right = 218.0
-margin_bottom = 690.0
+margin_bottom = 680.0
 size_flags_horizontal = 4
 text = "BACK"
 script = ExtResource( 2 )
 path = "res://scenes/ui/main_menu.tscn"
 
-[connection signal="pressed" from="Login/HBoxContainer/Button" to="." method="_on_login"]
-[connection signal="pressed" from="Login/HBoxContainer/Button2" to="." method="_on_signup"]
+[connection signal="pressed" from="Login/Button" to="." method="_on_login"]
+[connection signal="pressed" from="Account/Logout" to="." method="_on_logout_pressed"]
+[connection signal="pressed" from="Back" to="." method="_on_back_pressed"]
