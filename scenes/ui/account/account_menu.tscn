@@ -12,8 +12,9 @@ onready var login: Button = $Login/Button
 
 
 func _ready():
-	# warning-ignore:return_value_discarded
+	# warning-ignore-all:return_value_discarded
 	MangleApi.connect(\"username_needed\", self, \"_on_username_needed\")
+	MangleApi.connect(\"already_connected\", self, \"_on_already_connected\")
 	
 	$Account.hide()
 	$Login.hide()
@@ -31,6 +32,16 @@ func _ready():
 		return
 	
 	$Login.show()
+
+
+func _on_already_connected():
+	$Account.hide()
+	$Login.hide()
+	$SignUp.hide()
+	$Connecting.hide()
+	$Label.show()
+	$Connecting.show()
+	$Connecting.text = \"You can only be signed in on one device at once\"
 
 
 func _on_login():

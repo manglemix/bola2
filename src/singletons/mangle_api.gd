@@ -8,6 +8,7 @@ signal _connection_attempted(ok)
 signal _username_received
 signal username_needed(msg)
 signal connected
+signal already_connected
 signal leaderboard_update
 
 var ws: WebSocketClient
@@ -167,6 +168,8 @@ func _on_connection_closed(_was_clean):
 
 func _on_server_close_request(code: int, reason: String):
 	push_error("Server close request code: %s, reason: %s" % [code, reason])
+	if reason == "Already Connected":
+		emit_signal("already_connected")
 	var _tmp_ws = ws
 	ws = null
 	yield(_tmp_ws, "connection_closed")
@@ -205,9 +208,10 @@ func _reconnect():
 		ws = WebSocketClient.new()
 		var url: String
 		if Engine.editor_hint:
-			url = ProjectSettings.get_setting("api/websocket/route")
+			url = ProjectSettings.get_setting("constants/debug_data/route")
 		else:
 			url = ENDPOINTS[0]
+#		var url: String = ProjectSettings.get_setting("constants/debug_data/route")
 		url += "?api_token=" + _get_api_token()
 		
 		if !_login_token.empty():
