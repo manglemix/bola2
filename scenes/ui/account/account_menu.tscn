@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://themes/menu_theme.tres" type="Theme" id=1]
 [ext_resource path="res://scenes/ui/goto_button.gd" type="Script" id=2]
+[ext_resource path="res://addons/MaxSizeContainer/max_size_container.gd" type="Script" id=3]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends VBoxContainer
@@ -11,9 +12,13 @@ onready var login: Button = $Login/Button
 
 
 func _ready():
+	# warning-ignore:return_value_discarded
+	MangleApi.connect(\"username_needed\", self, \"_on_username_needed\")
+	
 	$Account.hide()
 	$Login.hide()
 	$Connecting.hide()
+	$SignUp.hide()
 	
 	if not MangleApi.connected:
 		$Connecting.show()
@@ -34,8 +39,7 @@ func _on_login():
 	if res == null:
 		$Login/LoginStatus.text = \"Failed to connect to server. Please try again later\"
 		return
-	yield(res, \"completed\")
-	_on_logged_in()
+	res.connect(\"completed\", self, \"_on_logged_in\")
 
 
 func _on_logged_in():
@@ -44,7 +48,8 @@ func _on_logged_in():
 	
 	$Login.hide()
 	$Label.hide()
-	$Account.visible = true
+	$SignUp.hide()
+	$Account.show()
 	$Account/Username.text = MangleApi.account_data.username
 	$Account/Easy.text += str(MangleApi.account_data.easy_highscore)
 	$Account/Normal.text += str(MangleApi.account_data.normal_highscore)
@@ -65,6 +70,15 @@ func _on_logout_pressed():
 func _on_back_pressed():
 	if MangleApi.logging_in:
 		MangleApi.cancel_login()
+
+
+func _on_username_needed(msg):
+	$Login.hide()
+	$SignUp.show()
+	$Account.hide()
+	$SignUp/Label.text = \"Please provide a username for your new account!\" if msg.empty() else msg
+	yield($SignUp/Button, \"pressed\")
+	MangleApi.provide_username($SignUp/MaxSizeContainer/LineEdit.text.strip_edges())
 "
 
 [node name="AccountMenu" type="VBoxContainer"]
@@ -75,23 +89,23 @@ alignment = 1
 script = SubResource( 1 )
 
 [node name="Label" type="Label" parent="."]
-margin_top = 120.0
+margin_top = 44.0
 margin_right = 361.0
-margin_bottom = 163.0
+margin_bottom = 87.0
 text = "ACCOUNT"
 align = 1
 
 [node name="Connecting" type="Label" parent="."]
-margin_top = 167.0
+margin_top = 91.0
 margin_right = 361.0
-margin_bottom = 210.0
+margin_bottom = 134.0
 text = "Connecting..."
 align = 1
 
 [node name="Login" type="VBoxContainer" parent="."]
-margin_top = 214.0
+margin_top = 138.0
 margin_right = 361.0
-margin_bottom = 304.0
+margin_bottom = 228.0
 
 [node name="Button" type="Button" parent="Login"]
 margin_right = 361.0
@@ -105,9 +119,9 @@ margin_bottom = 90.0
 align = 1
 
 [node name="Account" type="VBoxContainer" parent="."]
-margin_top = 308.0
+margin_top = 232.0
 margin_right = 361.0
-margin_bottom = 586.0
+margin_bottom = 510.0
 
 [node name="Username" type="Label" parent="Account"]
 margin_right = 361.0
@@ -148,17 +162,51 @@ margin_right = 361.0
 margin_bottom = 278.0
 text = "Logout"
 
-[node name="Control" type="Control" parent="."]
-margin_top = 590.0
+[node name="SignUp" type="VBoxContainer" parent="."]
+margin_top = 514.0
 margin_right = 361.0
-margin_bottom = 633.0
+margin_bottom = 661.0
+
+[node name="Label" type="Label" parent="SignUp"]
+margin_right = 361.0
+margin_bottom = 43.0
+align = 1
+
+[node name="MaxSizeContainer" type="MarginContainer" parent="SignUp"]
+margin_top = 47.0
+margin_right = 361.0
+margin_bottom = 100.0
+custom_constants/margin_right = 0
+custom_constants/margin_top = 0
+custom_constants/margin_left = 0
+custom_constants/margin_bottom = 0
+script = ExtResource( 3 )
+max_size = Vector2( 400, -1 )
+
+[node name="LineEdit" type="LineEdit" parent="SignUp/MaxSizeContainer"]
+margin_right = 361.0
+margin_bottom = 53.0
+align = 1
+max_length = 16
+placeholder_text = "Username"
+
+[node name="Button" type="Button" parent="SignUp"]
+margin_top = 104.0
+margin_right = 361.0
+margin_bottom = 147.0
+text = "Enter"
+
+[node name="Control" type="Control" parent="."]
+margin_top = 665.0
+margin_right = 361.0
+margin_bottom = 708.0
 rect_min_size = Vector2( 0, 43 )
 
 [node name="Back" type="Button" parent="."]
 margin_left = 142.0
-margin_top = 637.0
+margin_top = 712.0
 margin_right = 218.0
-margin_bottom = 680.0
+margin_bottom = 755.0
 size_flags_horizontal = 4
 text = "BACK"
 script = ExtResource( 2 )

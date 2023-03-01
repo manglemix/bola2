@@ -25,7 +25,7 @@ const NORMAL_PLATFORM_SCENE := preload(\"res://scenes/platforms/normal_platform.
 const ROTATABLE_PLATFORM_SCENE := preload(\"res://scenes/platforms/rotatable_platform.tscn\")
 const HEAD_CELL_COUNT := 10
 
-export var difficulty := 1
+export var difficulty: String
 
 var old_platform_root: Node2D
 var platform_root: Node2D
@@ -149,7 +149,7 @@ const RESET_PADDING := 0
 
 func on_next_platform_reached():
 	Tournament.win_level()
-#	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
+	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
 	
 	var new_player_position := Vector2(player.position.x, first_platform.position.y + (player.position.y - next_platform.position.y - RESET_PADDING))
 	var player_velocity := player.linear_velocity
@@ -325,6 +325,7 @@ func _input(event):
 
 [node name="Classic" type="Node2D"]
 script = SubResource( 1 )
+difficulty = "easy"
 
 [node name="ClassicMapGenerator" type="Node" parent="."]
 script = ExtResource( 6 )

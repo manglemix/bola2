@@ -71,7 +71,7 @@ tracks/1/keys = {
 }
 
 [node name="Classic" instance=ExtResource( 1 )]
-difficulty = 2
+difficulty = "normal"
 
 [node name="ClassicMapGenerator" parent="." index="0"]
 map_grid_height = 40
@@ -98,7 +98,7 @@ update_rotation = false
 update_scale = false
 
 [node name="Node2D" type="Node2D" parent="FirstPlatform" index="5"]
-position = Vector2( -256, -25 )
+position = Vector2( -245, -25 )
 scale = Vector2( 0.4, 0.4 )
 
 [node name="Label" type="Label" parent="FirstPlatform/Node2D" index="0"]

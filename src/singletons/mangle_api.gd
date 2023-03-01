@@ -4,13 +4,15 @@ const RETRY_DELAY := 3.0
 
 signal _data_received_or_event
 signal _connection_attempted(ok)
+signal _username_received
+signal username_needed(msg)
 signal connected
 signal leaderboard_update
 
 var ws: WebSocketClient
 var is_logged_in := false
 var logging_in := false
-var account_data: AccountData
+var account_data := AccountData.new()
 var _login_token: String
 var connected := false
 var watching_leaderboard := false
@@ -35,7 +37,7 @@ func login():
 	
 	logging_in = true
 	# warning-ignore:return_value_discarded
-	_send_message("\"Login\"".to_utf8())
+	_send_message("\"Login\"")
 	
 	var msg = yield(_recv_message(), "completed")
 	if msg == null:
@@ -48,9 +50,29 @@ func login():
 		logging_in = false
 		return
 	
-	assert(msg != "Sign Up")
-	
-	_read_user_profile(msg)
+	var user_profile_msg = ""
+	if msg == "Sign Up":
+		emit_signal("username_needed", "")
+		while true:
+			yield(self, "_username_received")
+			var data := {"username": account_data.username}
+			if account_data.easy_highscore > 0:
+				data["easy_highscore"] = account_data.easy_highscore
+			if account_data.normal_highscore > 0:
+				data["normal_highscore"] = account_data.normal_highscore
+			if account_data.expert_highscore > 0:
+				data["expert_highscore"] = account_data.expert_highscore
+			_send_message(to_json(data))
+			msg = yield(_recv_message(), "completed")
+			if msg == null:
+				logging_in = false
+				return
+			if msg == "Success":
+				break
+			else:
+				emit_signal("username_needed", msg)
+	else:
+		user_profile_msg = msg
 	
 	_login_token = yield(_recv_message(), "completed")
 	var file := File.new()
@@ -59,13 +81,20 @@ func login():
 	
 	is_logged_in = true
 	logging_in = false
+	if !user_profile_msg.empty():
+		_read_user_profile(user_profile_msg)
 
 
 func cancel_login():
 	if not logging_in:
 		return
 	# warning-ignore:return_value_discarded
-	_send_message("Cancel".to_utf8())
+	_send_message("Cancel")
+
+
+func provide_username(username: String):
+	account_data.username = username
+	emit_signal("_username_received")
 
 
 func logout():
@@ -73,11 +102,11 @@ func logout():
 		return
 	
 	# warning-ignore:return_value_discarded
-	_send_message("\"Logout\"".to_utf8())
+	_send_message("\"Logout\"")
 	yield(_recv_message(), "completed")
 	is_logged_in = false
 	_login_token = ""
-	account_data = null
+	account_data = AccountData.new()
 	var dir := Directory.new()
 	if dir.open("user://") != OK:
 		push_error("Unable to open user://")
@@ -86,16 +115,37 @@ func logout():
 		push_error("Unable to delete login_token")
 
 
-func watch_leaderboard(refresh:=true):
+func watch_leaderboard():
 	watching_leaderboard = true
-	_send_message("\"GetLeaderboard\"".to_utf8())
+	_send_message("\"GetLeaderboard\"")
 	ws.connect("data_received", self, "_on_leaderboard_update")
 
 
 func cancel_watch_leaderboard():
 	if not watching_leaderboard:
 		return
-	_send_message("Cancel".to_utf8())
+	_send_message("Cancel")
+
+
+func add_leaderboard_entry(difficulty: String, score: int):
+	match difficulty:
+		"easy":
+			account_data.easy_highscore = score
+		"normal":
+			account_data.normal_highscore = score
+		"expert":
+			account_data.expert_highscore = score
+		_:
+			push_error("Unexpected difficulty: %s" % difficulty)
+			return
+	
+	if is_logged_in:
+		_send_message(
+			"{\"ScoreUpdateRequest\":{\"difficulty\":\"%s\",\"score\":%s}}" % [difficulty, score]
+		)
+		var msg = yield(_recv_message(), "completed")
+		if msg != null and msg != "Success":
+			push_error("Faced the following error while updating leaderboard: %s" % msg)
 
 
 func _on_connection_closed(_was_clean):
@@ -103,10 +153,10 @@ func _on_connection_closed(_was_clean):
 	_reconnect()
 
 
-func _send_message(msg: PoolByteArray) -> bool:
+func _send_message(msg: String) -> bool:
 	if ws == null:
 		return false
-	var err := ws.get_peer(1).put_packet(msg)
+	var err := ws.get_peer(1).put_packet(msg.to_utf8())
 	if err != OK:
 		push_error("Could not send packet: " + str(err))
 		return false
@@ -187,13 +237,28 @@ func _get_api_token() -> String:
 
 
 func _read_user_profile(msg: String):
-	var user_profile: Dictionary = JSON.parse(msg).result
-	account_data = AccountData.new()
-	account_data.username = user_profile["username"]
-	account_data.easy_highscore = user_profile["easy_highscore"]
-	account_data.normal_highscore = user_profile["normal_highscore"]
-	account_data.expert_highscore = user_profile["expert_highscore"]
-	account_data.tournament_wins = user_profile["tournament_wins"]
+	var user_profile: Dictionary = parse_json(msg)
+	
+	var new_account_data = AccountData.new()
+	new_account_data.username = user_profile["username"]
+	new_account_data.easy_highscore = user_profile["easy_highscore"]
+	new_account_data.normal_highscore = user_profile["normal_highscore"]
+	new_account_data.expert_highscore = user_profile["expert_highscore"]
+	new_account_data.tournament_wins = user_profile["tournament_wins"]
+	
+	if account_data.easy_highscore > new_account_data.easy_highscore:
+		new_account_data.easy_highscore = account_data.easy_highscore
+		add_leaderboard_entry("easy", account_data.easy_highscore)
+		
+	if account_data.normal_highscore > new_account_data.normal_highscore:
+		new_account_data.normal_highscore = account_data.normal_highscore
+		add_leaderboard_entry("normal", account_data.normal_highscore)
+		
+	if account_data.expert_highscore > new_account_data.expert_highscore:
+		new_account_data.expert_highscore = account_data.expert_highscore
+		add_leaderboard_entry("expert", account_data.expert_highscore)
+	
+	account_data = new_account_data
 
 
 func _on_leaderboard_update():
@@ -202,7 +267,7 @@ func _on_leaderboard_update():
 		watching_leaderboard = false
 		ws.disconnect("data_received", self, "_on_leaderboard_update")
 		return
-	var data: Dictionary = JSON.parse(msg).result
+	var data: Dictionary = parse_json(msg)
 	if data.has("easy"):
 		easy_leaderboard = data["easy"]
 	if data.has("normal"):
