@@ -9,15 +9,22 @@ script/source = "extends VBoxContainer
 
 
 func _ready():
-	if !MangleApi.is_logged_in():
-		$Label2.text = \"Login to play\"
-		$Button2.disabled = true
-		return
+	$Button2.disabled = true
 	
 	if !Tournament.initialized:
-		$Button2.disabled = true
+		$ProgressBar/Label.set_process(false)
+		yield(get_tree(), \"idle_frame\")
+		$ProgressBar/Label.text = \"Connecting...\"
+		yield(Tournament, \"initialized\")
+		$ProgressBar/Label.set_process(true)
 	
-	if Tournament.won_tournament:
+	if !MangleApi.is_logged_in:
+		$Label2.text = \"Login to play\"
+		return
+	
+	$Button2.disabled = false
+	
+	if Tournament.get_won_tournament():
 		$Label2.text = \"\"\"You've already won this
 week's tournament\"\"\"
 

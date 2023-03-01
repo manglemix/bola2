@@ -1,5 +1,6 @@
 extends Node
 
+const ENDPOINTS := ["wss://bola.us1.manglemix.com/ws_api", "wss://bola.sea1.manglemix.com/ws_api"]
 const RETRY_DELAY := 3.0
 
 signal _data_received_or_event
@@ -148,9 +149,27 @@ func add_leaderboard_entry(difficulty: String, score: int):
 			push_error("Faced the following error while updating leaderboard: %s" % msg)
 
 
+func win_tournament(week_number: int):
+	if week_number in account_data.tournament_wins:
+		return
+	account_data.tournament_wins.append(week_number)
+	_send_message("\"WinTournament\"")
+	var msg = yield(_recv_message(), "completed")
+	if msg != null and msg != "Success":
+		push_error("Faced the following error while winning tournament: %s" % msg)
+
+
 func _on_connection_closed(_was_clean):
+	push_error("API Connection Lost")
 	emit_signal("_data_received_or_event")
 	_reconnect()
+
+
+func _on_server_close_request(code: int, reason: String):
+	push_error("Server close request code: %s, reason: %s" % [code, reason])
+	var _tmp_ws = ws
+	ws = null
+	yield(_tmp_ws, "connection_closed")
 
 
 func _send_message(msg: String) -> bool:
@@ -184,7 +203,11 @@ func _reconnect():
 	
 	while true:
 		ws = WebSocketClient.new()
-		var url: String = ProjectSettings.get_setting("api/websocket/route")
+		var url: String
+		if Engine.editor_hint:
+			url = ProjectSettings.get_setting("api/websocket/route")
+		else:
+			url = ENDPOINTS[0]
 		url += "?api_token=" + _get_api_token()
 		
 		if !_login_token.empty():
@@ -209,19 +232,34 @@ func _reconnect():
 	ws.disconnect("connection_error", self, "_on_connection_error")
 	ws.connect("data_received", self, "emit_signal", ["_data_received_or_event"])
 	ws.connect("connection_closed", self, "_on_connection_closed")
+	ws.connect("server_close_request", self, "_on_server_close_request")
 	
 	if !_login_token.empty():
 		var res = yield(_recv_message(), "completed")
 		if res == null:
 			return
 		_read_user_profile(res)
+		yield(init_tournament(true), "completed")
 		is_logged_in = true
 		connected = true
 		emit_signal("connected")
 		return
 	
+	yield(init_tournament(true), "completed")
 	connected = true
 	emit_signal("connected")
+
+
+func init_tournament(force:=false):
+	if not force and not connected:
+		yield(self, "connected")
+	
+	_send_message("\"GetTournament\"")
+	var res = yield(_recv_message(), "completed")
+	if res == null:
+		return
+	var data: Dictionary = parse_json(res)
+	Tournament.initialize(data["week"], data["seed"], data["start_time"], data["end_time"])
 
 
 func _on_connection_established(_protocol):

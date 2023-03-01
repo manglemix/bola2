@@ -105,7 +105,6 @@ _global_script_class_icons={
 [api]
 
 auth/api_token="Q98RNcL00bpAS5ihoKudIevDfPGyyNxb"
-websocket/route="ws://localhost/ws_api"
 
 [application]
 
@@ -122,8 +121,9 @@ Tournament="*res://src/singletons/tournament.gd"
 
 [constants]
 
-debug_data/app_version="4"
+debug_data/app_version="5"
 debug_data/visible_platforms=true
+debug_data/route="ws://localhost/ws_api"
 
 [display]
 

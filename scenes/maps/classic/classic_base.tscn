@@ -148,8 +148,12 @@ const RESET_PADDING := 0
 
 
 func on_next_platform_reached():
-	Tournament.win_level()
-	MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
+	var res = Tournament.win_level()
+	if res != null:
+		yield(res, \"completed\")
+	res = MangleApi.add_leaderboard_entry(difficulty, first_platform.counter)
+	if res != null:
+		yield(res, \"completed\")
 	
 	var new_player_position := Vector2(player.position.x, first_platform.position.y + (player.position.y - next_platform.position.y - RESET_PADDING))
 	var player_velocity := player.linear_velocity
