@@ -88,11 +88,7 @@ func logout():
 
 func watch_leaderboard(refresh:=true):
 	watching_leaderboard = true
-	var req := "{\"GetLeaderboard\":{"
-	if refresh:
-		req += "\"refresh\":true"
-	req += "}}"
-	_send_message(req.to_utf8())
+	_send_message("\"GetLeaderboard\"".to_utf8())
 	ws.connect("data_received", self, "_on_leaderboard_update")
 
 
