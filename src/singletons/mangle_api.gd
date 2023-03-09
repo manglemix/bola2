@@ -105,7 +105,8 @@ func logout():
 	
 	# warning-ignore:return_value_discarded
 	_send_message("\"Logout\"")
-	yield(_recv_message(), "completed")
+	if yield(_recv_message(), "completed") != "Success":
+		return
 	is_logged_in = false
 	_login_token = ""
 	account_data = AccountData.new()
@@ -158,6 +159,31 @@ func win_tournament(week_number: int):
 	var msg = yield(_recv_message(), "completed")
 	if msg != null and msg != "Success":
 		push_error("Faced the following error while winning tournament: %s" % msg)
+
+
+func send_host_session_request(sdp_offer: String) -> String:
+	sdp_offer = sdp_offer.replace("\n", "\\n")
+	_send_message("{\"HostSessionRequest\": \"%s\"}" % sdp_offer)
+	return yield(_recv_message(), "completed")
+
+
+func send_join_session_request(code: String) -> String:
+	_send_message("{\"JoinSessionRequest\": \"%s\"}" % code)
+	var res = yield(_recv_message(), "completed")
+	if res == "Not Found":
+		return ""
+	return res
+
+
+func provide_sdp_answer(sdp_answer: String):
+	_send_message("{\"SDPAnswer\": \"%s\"}" % sdp_answer)
+
+
+func cancel_join():
+	_send_message("Cancel")
+	var msg = yield(_recv_message(), "completed")
+	if msg != null and msg != "Success":
+		push_error("Faced the following error while cancelling join: %s" % msg)
 
 
 func _on_connection_closed(_was_clean):

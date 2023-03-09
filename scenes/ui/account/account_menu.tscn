@@ -62,10 +62,10 @@ func _on_logged_in():
 	$SignUp.hide()
 	$Account.show()
 	$Account/Username.text = MangleApi.account_data.username
-	$Account/Easy.text += str(MangleApi.account_data.easy_highscore)
-	$Account/Normal.text += str(MangleApi.account_data.normal_highscore)
-	$Account/Expert.text += str(MangleApi.account_data.expert_highscore)
-	$Account/Tournament.text += str(MangleApi.account_data.tournament_wins.size())
+	$Account/HBoxContainer/Label.text = str(MangleApi.account_data.easy_highscore)
+	$Account/HBoxContainer2/Label.text = str(MangleApi.account_data.normal_highscore)
+	$Account/HBoxContainer3/Label.text = str(MangleApi.account_data.expert_highscore)
+	$Account/HBoxContainer4/Label.text = str(MangleApi.account_data.tournament_wins.size())
 
 
 func _on_logout_pressed():
@@ -139,33 +139,77 @@ margin_right = 361.0
 margin_bottom = 43.0
 align = 1
 
-[node name="Easy" type="Label" parent="Account"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Account"]
 margin_top = 47.0
 margin_right = 361.0
 margin_bottom = 90.0
+alignment = 1
+
+[node name="Easy" type="Label" parent="Account/HBoxContainer"]
+margin_left = 26.0
+margin_right = 330.0
+margin_bottom = 43.0
 text = "Easy Highscore: "
 align = 1
 
-[node name="Normal" type="Label" parent="Account"]
+[node name="Label" type="Label" parent="Account/HBoxContainer"]
+margin_left = 334.0
+margin_right = 334.0
+margin_bottom = 43.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Account"]
 margin_top = 94.0
 margin_right = 361.0
 margin_bottom = 137.0
+alignment = 1
+
+[node name="Normal" type="Label" parent="Account/HBoxContainer2"]
+margin_left = 7.0
+margin_right = 349.0
+margin_bottom = 43.0
 text = "Normal Highscore: "
 align = 1
 
-[node name="Expert" type="Label" parent="Account"]
+[node name="Label" type="Label" parent="Account/HBoxContainer2"]
+margin_left = 353.0
+margin_right = 353.0
+margin_bottom = 43.0
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Account"]
 margin_top = 141.0
 margin_right = 361.0
 margin_bottom = 184.0
+alignment = 1
+
+[node name="Expert" type="Label" parent="Account/HBoxContainer3"]
+margin_left = 7.0
+margin_right = 349.0
+margin_bottom = 43.0
 text = "Expert Highscore: "
 align = 1
 
-[node name="Tournament" type="Label" parent="Account"]
+[node name="Label" type="Label" parent="Account/HBoxContainer3"]
+margin_left = 353.0
+margin_right = 353.0
+margin_bottom = 43.0
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="Account"]
 margin_top = 188.0
 margin_right = 361.0
 margin_bottom = 231.0
+alignment = 1
+
+[node name="Tournament" type="Label" parent="Account/HBoxContainer4"]
+margin_left = 17.0
+margin_right = 340.0
+margin_bottom = 43.0
 text = "Tournament Wins: "
 align = 1
+
+[node name="Label" type="Label" parent="Account/HBoxContainer4"]
+margin_left = 344.0
+margin_right = 344.0
+margin_bottom = 43.0
 
 [node name="Logout" type="Button" parent="Account"]
 margin_top = 235.0

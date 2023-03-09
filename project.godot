@@ -114,10 +114,11 @@ config/icon="res://icon.png"
 
 [autoload]
 
-FrameBlocker="res://src/singletons/frame_blocker.gd"
 MangleApi="*res://src/singletons/mangle_api.gd"
 Initializer="*res://src/singletons/initializer.gd"
 Tournament="*res://src/singletons/tournament.gd"
+Music="*res://src/singletons/music.gd"
+MangleMultiplayer="*res://src/singletons/mangle_multiplayer.gd"
 
 [constants]
 
@@ -140,6 +141,11 @@ window/stretch/shrink=0.8
 [editor_plugins]
 
 enabled=PoolStringArray( "res://addons/MaxSizeContainer/plugin.cfg" )
+
+[gdnative]
+
+singletons=[ "res://webrtc/webrtc.tres", "res://webrtc_debug/webrtc_debug.tres" ]
+singletons_disabled=[ "res://webrtc/webrtc.tres" ]
 
 [gui]
 

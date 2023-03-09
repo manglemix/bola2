@@ -46,6 +46,7 @@ margin_top = 391.0
 margin_right = 284.0
 margin_bottom = 434.0
 size_flags_horizontal = 4
+disabled = true
 text = "MULTIPLAYER"
 script = ExtResource( 3 )
 path = "res://scenes/ui/play/multiplayer_menu.tscn"
