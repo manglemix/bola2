@@ -163,7 +163,7 @@ func win_tournament(week_number: int):
 
 func host_session(sdp_offer: String) -> String:
 	sdp_offer = sdp_offer.replace("\n", "\\n")
-	_send_message("{\"HostSessionRequest\": \"%s\"}" % sdp_offer)
+	_send_message("{\"HostSession\": \"%s\"}" % sdp_offer)
 	var res = yield(_recv_message(), "completed")
 	if res == null:
 		push_error("Host Session Request failed")
@@ -173,13 +173,13 @@ func host_session(sdp_offer: String) -> String:
 
 
 func end_host_session():
-	_send_message("\"EndHostSessionRequest\"")
+	_send_message("\"Cancel\"")
 	if yield(_recv_message(), "completed") != "Success":
 		push_error("Unable to end host session")
 
 
 func join_session(code: String) -> String:
-	_send_message("{\"JoinSessionRequest\": \"%s\"}" % code)
+	_send_message("{\"JoinSession\": \"%s\"}" % code)
 	var res = yield(_recv_message(), "completed")
 	if res == "Not Found" or res == null:
 		push_error("Join Session Request failed")
@@ -189,7 +189,7 @@ func join_session(code: String) -> String:
 
 
 func join_session_followup(sdp_answer: String, ice: String):
-	_send_message("{\"JoinSessionRequestFollowup\": {\"sdp_answer\": \"%s\", \"ice\": \"%s\"}}" % [sdp_answer, ice])
+	_send_message("{\"JoinSessionFollowup\": {\"sdp_answer\": \"%s\", \"ice_candidate\": \"%s\"}}" % [sdp_answer, ice])
 	if yield(_recv_message(), "completed") != "Success":
 		return ""
 	var res = yield(_recv_message(), "completed")
