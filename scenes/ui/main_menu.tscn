@@ -10,7 +10,6 @@ script/source = "extends Control
 
 
 func _ready():
-	MangleMultiplayer.host_session()
 	if Initializer.intro_played:
 		return
 	modulate.a = 0

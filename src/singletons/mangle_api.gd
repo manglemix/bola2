@@ -48,7 +48,7 @@ func login():
 	OS.shell_open(msg)
 	
 	msg = yield(_recv_message(), "completed")
-	if msg == null or msg == "Login Cancelled":
+	if msg == null or msg == "Login Cancelled" or msg == "Auth Failed":
 		logging_in = false
 		return
 	

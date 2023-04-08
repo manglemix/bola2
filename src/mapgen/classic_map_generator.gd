@@ -15,7 +15,8 @@ export var bouncy_platform_probability := 0.08
 export var platform_thickness := 10
 
 
-func generate() -> void:
+func generate() -> Array:
+	var results := []
 	var i := 0
 	var origins := []
 	
@@ -82,8 +83,7 @@ func generate() -> void:
 		else:
 			platform_type = 3
 		
-		emit_signal(
-			"platform_generated",
+		results.append(
 			GeneratedPlatform.new(
 				start_origin * grid_cell_size,
 				end_origin * grid_cell_size,
@@ -94,4 +94,4 @@ func generate() -> void:
 		
 		i += 1
 	
-	emit_signal("finished")
+	return results

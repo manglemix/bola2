@@ -14,5 +14,6 @@ func seed_rng(new_seed: int):
 	rng.seed = new_seed
 
 
-func generate() -> void:
+func generate() -> Array:
 	print_debug("Abstract method generate needs to be implemented before it can be called")
+	return []

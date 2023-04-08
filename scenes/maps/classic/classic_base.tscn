@@ -13,6 +13,7 @@
 [sub_resource type="GDScript" id=1]
 script/source = "extends Node2D
 
+signal _regenerate(unused)
 
 const FADE_IN_DELAY_MODIFIER := 0.0015
 const MAX_SPAWN_SPEED := 1000.0
@@ -30,6 +31,9 @@ export var difficulty: String
 var old_platform_root: Node2D
 var platform_root: Node2D
 var dying := false
+var platform_cache: Array
+var cache_mutex := Mutex.new()
+var generation_thread := Thread.new()
 
 onready var generator: ClassicMapGenerator = $ClassicMapGenerator
 onready var player: ActiveAgent = $Player
@@ -39,22 +43,61 @@ onready var next_platform_alpha: float = next_platform.modulate.a
 onready var min_transition_height: float = (HEAD_CELL_COUNT - generator.map_grid_height) * generator.grid_cell_size
 
 
-func _generate():
+func _generate(died:=false):
 	if Tournament.enabled:
-		generator.seed_rng(Tournament.tournament_seed)
+		if died:
+			generator.seed_rng(Tournament.tournament_seed)
+			for platform in generator.generate():
+				add_platform(platform)
+			emit_signal(\"_regenerate\", true)
+		else:
+			cache_mutex.lock()
+			for platform in platform_cache:
+				platform_root.call_deferred(\"add_child\", platform, true)
+			platform_cache.clear()
+			cache_mutex.unlock()
+			emit_signal(\"_regenerate\")
 	else:
+		cache_mutex.lock()
+		for platform in platform_cache:
+			platform_root.call_deferred(\"add_child\", platform, true)
+		platform_cache.clear()
+		cache_mutex.unlock()
 		generator.seed_rng(randi())
-	generator.generate()
+		emit_signal(\"_regenerate\")
 
 
 func _ready():
 	platform_root = Node2D.new()
 	platform_root.name = \"PlatformRoot\"
 	add_child(platform_root)
-	_generate()
+	if Tournament.enabled:
+		generator.seed_rng(Tournament.tournament_seed)
+	else:
+		generator.seed_rng(randi())
+	for platform in generator.generate():
+		add_platform(platform)
+	generation_thread.start(self, \"generation_task\", null, Thread.PRIORITY_LOW)
 
 
-func add_platform(platform_data: GeneratedPlatform):
+func generation_task():
+	var unused := false
+	while true:
+		cache_mutex.lock()
+		if unused:
+			for platform in platform_cache:
+				platform.free()
+			unused = false
+		platform_cache.clear()
+		for data in generator.generate():
+			add_platform(data, true)
+		cache_mutex.unlock()
+		var tmp = yield(self, \"_regenerate\")
+		if tmp != null:
+			unused = tmp
+
+
+func add_platform(platform_data: GeneratedPlatform, cache:=false):
 	var platform: Node2D
 	match platform_data.platform_type:
 		GeneratedPlatform.PlatformType.FRAGILE:
@@ -86,19 +129,21 @@ func add_platform(platform_data: GeneratedPlatform):
 	audio_player.add_child(audio_timer)
 	platform.add_child(audio_player)
 	
-	platform_root.call_deferred(\"add_child\", platform, true)
+	if cache:
+		platform_cache.append(platform)
+	else:
+		platform_root.call_deferred(\"add_child\", platform, true)
 	
-	yield(platform, \"tree_entered\")
+	platform.connect(\"tree_entered\", self, \"_on_platform_tree_entered\", [platform, delay])
+
+
+static func _on_platform_tree_entered(platform: Node, delay: float):
 	var tween := platform.create_tween()
 	var tweener := tween.tween_property(platform, \"modulate:a\", 1.0, 0.5)
 	# warning-ignore-all:return_value_discarded
 	tweener.set_delay(delay)
 	tweener.set_trans(Tween.TRANS_QUAD)
 	tweener.set_ease(Tween.EASE_OUT)
-
-
-func finish_generation():
-	pass
 
 
 func on_player_died():
@@ -141,7 +186,8 @@ func on_player_died():
 	player_velocity.y = clamp(player_velocity.y, - MAX_RESPAWN_Y_SPEED, 0)
 	player.queue_velocity_set(player_velocity)
 	fade_in_first_platform()
-	_generate()
+
+	_generate(true)
 
 
 const RESET_PADDING := 0
@@ -201,7 +247,8 @@ func on_next_platform_reached():
 	first_platform.play_sound()
 	fade_in_first_platform()
 	
-	generator.generate()
+	_generate()
+	
 	yield(get_tree(), \"physics_frame\")
 	yield(get_tree(), \"physics_frame\")
 	yield(get_tree(), \"physics_frame\")
@@ -423,8 +470,6 @@ polygon = PoolVector2Array( 500, -10, 500, 10, -500, 10, -500, -10 )
 position = Vector2( 0, 139 )
 rect = Rect2( -500, 0, 1000, -2200 )
 
-[connection signal="finished" from="ClassicMapGenerator" to="." method="finish_generation"]
-[connection signal="platform_generated" from="ClassicMapGenerator" to="." method="add_platform"]
 [connection signal="exit_pressed" from="CanvasLayer/InGameMenu" to="CanvasLayer" method="on_exit_pressed"]
 [connection signal="direction_changed" from="Player/JumpInput" to="Player/ClassicJumpController" method="set_direction"]
 [connection signal="jump_ended" from="Player/JumpInput" to="Player/ClassicJumpController" method="set_trying_to_jump" binds= [ false ]]
